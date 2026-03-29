@@ -93,7 +93,7 @@ const Login = () => {
           </div>
         </motion.div>
       </div>
-
+    
       <div className="flex-1 flex items-center justify-center p-6 lg:p-12 relative overflow-y-auto overflow-x-hidden bg-muted/10">
         <div className="absolute inset-0 bg-grid-black/[0.02] -z-10" />
         <motion.div
