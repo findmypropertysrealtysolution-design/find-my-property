@@ -31,7 +31,8 @@ const Login = () => {
   const router = useRouter();
   const { toast } = useToast();
 
-  const handleSendOtp = async () => {
+  const handleSendOtp = async (e?: React.SubmitEvent<HTMLFormElement>) => {
+      e?.preventDefault();
     const formattedPhone = normalizePhone(phone);
     if (!formattedPhone) {
       toast({
@@ -64,8 +65,8 @@ const Login = () => {
   };
 
 
-const handleVerifyOtp = async (e: React.FormEvent) => {
-    e.preventDefault();
+const handleVerifyOtp = async (e?: React.SubmitEvent<HTMLFormElement>) => {
+    e?.preventDefault();
     if (!otpSent) {
       toast({
         title: "OTP not sent",
@@ -190,7 +191,7 @@ const handleVerifyOtp = async (e: React.FormEvent) => {
               <Button
                 type="button"
                 className="w-full h-12 rounded-xl text-base font-semibold shadow-md active:scale-[0.98] transition-all"
-                onClick={handleSendOtp}
+                onClick={() => handleSendOtp()}
                 disabled={sendingOtp || !phone.trim()}
               >
                 {sendingOtp ? "Sending OTP..." : "Continue with Phone"}
@@ -208,7 +209,7 @@ const handleVerifyOtp = async (e: React.FormEvent) => {
                   type="button"
                   variant="ghost"
                   className="w-full h-10 rounded-xl text-sm text-muted-foreground hover:bg-muted/50"
-                  onClick={handleSendOtp}
+                  onClick={() => handleSendOtp()}
                   disabled={sendingOtp}
                 >
                   {sendingOtp ? "Sending..." : "Didn't receive code? Resend"}
