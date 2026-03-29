@@ -25,7 +25,6 @@ const HeroSection = () => {
             sizes="100vw"
           />
         </div>
-        <div className="absolute inset-0 bg-linear-to-r from-foreground/80 via-foreground/60 to-foreground/30" />
       </div>
 
       <div className="relative z-10 container mx-auto px-4 py-20">
@@ -37,7 +36,7 @@ const HeroSection = () => {
         >
           <h1 className="font-heading text-4xl md:text-6xl font-extrabold text-primary-foreground leading-tight mb-4">
             Find Your Perfect <br />
-            <span className="text-accent">Home</span> Without Brokers
+            <span className="text-primary">Home</span> Without Brokers
           </h1>
           <p className="text-primary-foreground/80 text-lg md:text-xl mb-8 max-w-xl">
             India&apos;s #1 property platform. Connect directly with owners — zero brokerage, 100% verified listings.
