@@ -1,11 +1,23 @@
 import { z } from "zod";
 import type { BackendProperty } from "@/lib/property-mapper";
 
+const propertyTypeOptions = ["Apartment", "House", "Villa", "Townhome"] as const;
+const listingTypeOptions = ["Rent", "Sale", "Lease"] as const;
+
+type PropertyTypeOption = (typeof propertyTypeOptions)[number];
+type ListingTypeOption = (typeof listingTypeOptions)[number];
+
+const isPropertyTypeOption = (value: string): value is PropertyTypeOption =>
+  propertyTypeOptions.includes(value as PropertyTypeOption);
+
+const isListingTypeOption = (value: string): value is ListingTypeOption =>
+  listingTypeOptions.includes(value as ListingTypeOption);
+
 export const propertyFormSchema = z.object({
-  propertyType: z.enum(["Apartment", "House", "Villa", "Townhome"], {
+  propertyType: z.enum(propertyTypeOptions, {
     required_error: "Please select a property type.",
   }),
-  listingType: z.enum(["Rent", "Sale", "Lease"], {
+  listingType: z.enum(listingTypeOptions, {
     required_error: "Please select a listing type.",
   }),
   title: z.string().min(5, "Title must be at least 5 characters.").max(100, "Title is too long."),
@@ -44,9 +56,18 @@ export const propertyFormSchema = z.object({
 export type PropertyFormValues = z.infer<typeof propertyFormSchema>;
 
 export const getDefaultValues = (initialData?: BackendProperty): Partial<PropertyFormValues> => {
+  const propertyType =
+    initialData?.propertyType && isPropertyTypeOption(initialData.propertyType)
+      ? initialData.propertyType
+      : "Apartment";
+  const listingType =
+    initialData?.listingType && isListingTypeOption(initialData.listingType)
+      ? initialData.listingType
+      : "Rent";
+
   return {
-    propertyType: initialData?.propertyType || "Apartment",
-    listingType: initialData?.listingType || "Rent",
+    propertyType,
+    listingType,
     title: initialData?.title || "",
     bedrooms: initialData?.bedrooms ? String(initialData.bedrooms) : (initialData?.rooms ? String(initialData.rooms) : ""),
     bathrooms: initialData?.bathrooms ? String(initialData.bathrooms) : "",
