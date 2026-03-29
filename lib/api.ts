@@ -1,7 +1,28 @@
 import type { Property } from "@/components/PropertyCard";
 import { mapBackendProperty, type BackendProperty } from "@/lib/property-mapper";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3005";
+const DEFAULT_LOCAL_API_URL = "http://localhost:3005";
+
+function getApiBaseUrl() {
+  const configuredApiUrl = process.env.NEXT_PUBLIC_API_URL?.trim();
+
+  if (typeof window !== "undefined") {
+    if (configuredApiUrl) {
+      const isSecurePage = window.location.protocol === "https:";
+      const isInsecureApiOrigin = configuredApiUrl.startsWith("http://");
+
+      if (isSecurePage && isInsecureApiOrigin) {
+        return "/api";
+      }
+
+      return configuredApiUrl;
+    }
+
+    return window.location.protocol === "https:" ? "/api" : DEFAULT_LOCAL_API_URL;
+  }
+
+  return configuredApiUrl || DEFAULT_LOCAL_API_URL;
+}
 
 type RequestOptions = RequestInit & {
   token?: string;
@@ -98,7 +119,7 @@ async function request<T>(path: string, options: RequestOptions = {}): Promise<T
     headers.set("Authorization", `Bearer ${options.token}`);
   }
 
-  const response = await fetch(`${API_BASE_URL}${path}`, {
+  const response = await fetch(`${getApiBaseUrl()}${path}`, {
     ...options,
     headers,
   });
