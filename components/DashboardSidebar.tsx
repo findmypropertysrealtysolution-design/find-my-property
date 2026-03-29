@@ -3,7 +3,6 @@
 import { Building2, LogOut } from "lucide-react";
 import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
-import { useSettings } from "@/contexts/SettingsContext";
 import { NavLink } from "@/components/NavLink";
 import {
   Sidebar,
@@ -19,6 +18,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { LucideIcon } from "lucide-react";
+import { SITE_NAME } from "@/lib/branding";
 
 interface NavItem {
   title: string;
@@ -32,7 +32,6 @@ interface DashboardSidebarProps {
 
 const DashboardSidebar = ({ items }: DashboardSidebarProps) => {
   const { user, logout } = useAuth();
-  const { settings } = useSettings();
   const { state } = useSidebar();
   const collapsed = state === "collapsed";
 
@@ -47,7 +46,7 @@ const DashboardSidebar = ({ items }: DashboardSidebarProps) => {
             </div>
             {!collapsed && (
               <span className="font-heading font-bold text-lg text-foreground">
-                {settings?.siteName || "NoBroker"}
+                {SITE_NAME}
               </span>
             )}
           </Link>

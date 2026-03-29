@@ -7,7 +7,6 @@ import Footer from "@/components/Footer"
 import AuthGateModal from "@/components/AuthGateModal"
 import { sampleProperties } from "@/data/properties"
 import { useAuth } from "@/contexts/AuthContext"
-import { useSettings } from "@/contexts/SettingsContext"
 import { useProperties } from "@/hooks/use-properties"
 import { useState } from "react"
 import { motion } from "framer-motion"
@@ -26,6 +25,7 @@ import {
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
+import { SITE_NAME } from "@/lib/branding"
 
 const features = [
   {
@@ -87,7 +87,7 @@ const popularCities = [
 const testimonials = [
   {
     quote:
-      "Found my 3BHK in Whitefield in 3 days. No broker, no hassle. Saved almost ₹50,000!",
+      `Found my 3BHK in Whitefield in 3 days. ${SITE_NAME}, no hassle. Saved almost ₹50,000!`,
     author: "Priya S.",
     role: "Tenant, Bangalore",
     rating: 5,
@@ -110,7 +110,6 @@ const testimonials = [
 
 const Index = () => {
   const { isAuthenticated, isAuthReady } = useAuth()
-  const { settings } = useSettings()
   const { data } = useProperties()
   const featuredProperties = (data?.length ? data : sampleProperties).slice(
     0,
@@ -140,7 +139,7 @@ const Index = () => {
         <div className="container mx-auto px-4">
           <div className="mb-14 text-center">
             <h2 className="mb-3 font-heading text-3xl font-bold text-foreground md:text-4xl">
-              Why Choose {settings?.siteName || "NoBroker"}?
+              Why Choose {SITE_NAME}?
             </h2>
             <p className="mx-auto max-w-lg wrap-break-word text-muted-foreground">
               We eliminate brokers from the real estate equation, saving you

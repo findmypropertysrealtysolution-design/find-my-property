@@ -7,10 +7,10 @@ import { useRouter } from "next/navigation";
 import { Building2, Smartphone } from "lucide-react";
 import { motion } from "framer-motion";
 import { useState } from "react";
-import { useAuth, type User } from "@/contexts/AuthContext";
-import { useSettings } from "@/contexts/SettingsContext";
+import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
-import { getPostAuthRoute } from "@/lib/auth-redirect";
+import Image from "next/image";
+import { SITE_NAME } from "@/lib/branding";
 
 const normalizePhone = (value: string) => {
   const trimmed = value.trim();
@@ -27,7 +27,6 @@ const Login = () => {
   const [sendingOtp, setSendingOtp] = useState(false);
   const [verifyingOtp, setVerifyingOtp] = useState(false);
   const { loginWithPhone, requestPhoneOtp } = useAuth();
-  const { settings } = useSettings();
   const router = useRouter();
   const { toast } = useToast();
 
@@ -63,44 +62,19 @@ const Login = () => {
     });
   };
 
-  const handleVerifyOtp = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!otpSent) {
-      toast({
-        title: "OTP not sent",
-        description: "Request OTP first.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setVerifyingOtp(true);
-    const result = await loginWithPhone(phone, otp);
-    setVerifyingOtp(false);
-
-    if (!result.success) {
-      toast({
-        title: "Phone login failed",
-        description: "error" in result ? result.error : "Login failed",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    const nextUser = JSON.parse(localStorage.getItem("nb_user") || "null") as User | null;
-    const from = new URLSearchParams(window.location.search).get("from");
-    const safeFrom =
-      from && from.startsWith("/") && from !== "/login" && from !== "/register"
-        ? from
-        : null;
-    router.replace(safeFrom || getPostAuthRoute(nextUser));
-  };
+  
 
   return (
     <div className="h-screen bg-background flex overflow-hidden">
       <div className="hidden lg:flex lg:w-1/2 relative">
-        <div className="absolute inset-0 bg-gradient-to-br from-primary/40 via-slate-800 to-slate-900" />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
+            <Image
+              src="/images/auth-bg.jpg"
+              alt="Auth apartments"
+              fill
+              priority
+              className="object-cover"
+              sizes="100vw"
+            />
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -109,7 +83,7 @@ const Login = () => {
         >
           <div className="bg-card/90 backdrop-blur-md rounded-2xl p-6 shadow-lg">
             <p className="text-foreground text-sm leading-relaxed mb-4">
-              &quot;{settings?.siteName || "NoBroker"} helped us find our dream home in Bangalore. All we just did was
+              &quot;{SITE_NAME} helped us find our dream home in Bangalore. All we just did was
               search their listings and we found it in a few minutes!&quot;
             </p>
             <div>
@@ -137,7 +111,7 @@ const Login = () => {
             </p>
           </div>
 
-          <form onSubmit={handleVerifyOtp} className="space-y-6">
+          <form onSubmit={handleSendOtp} className="space-y-6">
             <div className="space-y-4">
               <div className="space-y-2">
                 <label className="text-sm font-medium leading-none text-foreground ml-1">
@@ -191,9 +165,9 @@ const Login = () => {
                 <Button
                   type="submit"
                   className="w-full h-12 rounded-xl text-base font-semibold shadow-md active:scale-[0.98] transition-all"
-                  disabled={verifyingOtp || otp.length < 4}
+                  disabled={otp.length < 4}
                 >
-                  {verifyingOtp ? "Verifying..." : "Verify & Login"}
+                  {sendingOtp ? "Verifying..." : "Verify & Login"}
                 </Button>
                 <Button
                   type="button"
@@ -209,7 +183,7 @@ const Login = () => {
           </form>
 
           <div className="mt-8 text-center text-sm">
-            <span className="text-muted-foreground">New to {settings?.siteName || "NoBroker"}? </span>
+            <span className="text-muted-foreground">New to {SITE_NAME}? </span>
             <Link href="/register" className="text-primary font-semibold hover:underline transition-all">
               Create an account
             </Link>

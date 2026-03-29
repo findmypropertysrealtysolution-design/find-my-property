@@ -1,9 +1,9 @@
 import { Building2, Heart, Phone, Mail } from "lucide-react";
 import Link from "next/link";
-import { useSettings } from "@/contexts/SettingsContext";
+import { SITE_NAME } from "@/lib/branding";
 
 const Footer = () => {
-  const { settings } = useSettings();
+  const settings = { siteName: SITE_NAME };
 
   return (
     <footer className="bg-card border-t border-border">
@@ -15,7 +15,7 @@ const Footer = () => {
                 <Building2 className="w-5 h-5 text-primary-foreground" />
               </div>
               <span className="font-heading font-bold text-xl text-foreground">
-                {settings?.siteName || "NoBroker"}
+                {SITE_NAME}
               </span>
             </Link>
             <p className="text-sm text-muted-foreground max-w-xs wrap-break-word">

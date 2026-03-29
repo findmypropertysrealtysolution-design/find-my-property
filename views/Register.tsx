@@ -8,9 +8,9 @@ import { Building2, Smartphone, User as UserIcon } from "lucide-react";
 import { motion } from "framer-motion";
 import { useState } from "react";
 import { useAuth, type User } from "@/contexts/AuthContext";
-import { useSettings } from "@/contexts/SettingsContext";
 import { useToast } from "@/hooks/use-toast";
 import { getPostAuthRoute } from "@/lib/auth-redirect";
+import { SITE_NAME } from "@/lib/branding";
 
 const normalizePhone = (value: string) => {
   const trimmed = value.trim();
@@ -28,7 +28,6 @@ const Register = () => {
   const [sendingOtp, setSendingOtp] = useState(false);
   const [verifyingOtp, setVerifyingOtp] = useState(false);
   const { loginWithPhone, requestPhoneOtp } = useAuth();
-  const { settings } = useSettings();
   const router = useRouter();
   const { toast } = useToast();
 
@@ -108,7 +107,7 @@ const Register = () => {
         >
           <div className="bg-card/90 backdrop-blur-md rounded-2xl p-6 shadow-lg">
             <p className="text-foreground text-sm leading-relaxed mb-4">
-              &quot;{settings?.siteName || "NoBroker"} helped us find our dream home in Bangalore. All we just did was
+              &quot;{SITE_NAME} helped us find our dream home in Bangalore. All we just did was
               search their listings and we found it in a few minutes!&quot;
             </p>
             <div>

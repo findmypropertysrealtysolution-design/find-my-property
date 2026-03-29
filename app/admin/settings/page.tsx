@@ -1,5 +1,5 @@
-import AdminSettings from "@/views/admin/AdminSettings";
+import { redirect } from "next/navigation";
 
 export default function AdminSettingsPage() {
-  return <AdminSettings />;
+  redirect("/admin");
 }

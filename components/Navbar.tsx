@@ -7,14 +7,14 @@ import { Menu, X, Building2, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/contexts/AuthContext";
-import { useSettings } from "@/contexts/SettingsContext";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import ThemeToggle from "@/components/ThemeToggle";
+import { SITE_NAME } from "@/lib/branding";
 
 const Navbar = () => {
   const [mobileOpen, setMobileOpen] = useState(false);
   const router = useRouter();
   const { user, isAuthenticated, logout } = useAuth();
-  const { settings } = useSettings();
 
   const getDashboardLink = () => {
     if (!user) return "/login";
@@ -32,11 +32,12 @@ const Navbar = () => {
             <Building2 className="w-5 h-5 text-primary-foreground" />
           </div>
           <span className="font-heading font-bold text-xl text-foreground">
-            {settings?.siteName || "NoBroker"}
+            {SITE_NAME}
           </span>
         </Link>
 
         <div className="hidden md:flex items-center gap-3 min-w-0 shrink-0">
+          <ThemeToggle />
           {isAuthenticated ? (
             <>
               <Button variant="ghost" size="sm" asChild>
@@ -90,6 +91,10 @@ const Navbar = () => {
             className="md:hidden bg-card border-b border-border overflow-hidden"
           >
             <div className="px-4 py-3">
+              <div className="mb-3 flex items-center justify-between">
+                <span className="font-heading text-sm font-semibold text-foreground">{SITE_NAME}</span>
+                <ThemeToggle className="h-9 w-9" />
+              </div>
               <div className="flex gap-2">
                 {isAuthenticated ? (
                   <>

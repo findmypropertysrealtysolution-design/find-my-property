@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useAuth } from "@/contexts/AuthContext";
 import { LogOut } from "lucide-react";
+import ThemeToggle from "@/components/ThemeToggle";
 
 interface DashboardHeaderProps {
   title?: string;
@@ -47,6 +48,7 @@ export default function DashboardHeader({ title }: DashboardHeaderProps) {
         )}
       </div>
       <div className="flex items-center gap-2 shrink-0">
+        <ThemeToggle />
         {user && (
           <>
             <Link

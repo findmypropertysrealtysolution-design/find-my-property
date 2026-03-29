@@ -3,8 +3,8 @@
 import { Building2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { useSettings } from "@/contexts/SettingsContext";
 import { motion, AnimatePresence } from "framer-motion";
+import { SITE_NAME } from "@/lib/branding";
 
 interface AuthGateModalProps {
   open: boolean;
@@ -13,7 +13,6 @@ interface AuthGateModalProps {
 }
 
 const AuthGateModal = ({ open, onClose }: AuthGateModalProps) => {
-  const { settings } = useSettings();
   return (
     <AnimatePresence>
       {open && (
@@ -38,7 +37,7 @@ const AuthGateModal = ({ open, onClose }: AuthGateModalProps) => {
                   <Building2 className="w-5 h-5 text-primary-foreground" />
                 </div>
                 <span className="font-heading font-bold text-xl text-foreground">
-                  {settings?.siteName || "NoBroker"}
+                  {SITE_NAME}
                 </span>
               </div>
               <p className="text-foreground font-heading font-semibold text-lg mb-6">

@@ -6,6 +6,7 @@ import { api } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { CheckCircle2, XCircle, Loader2, Building2 } from "lucide-react";
 import { motion } from "framer-motion";
+import { SITE_NAME } from "@/lib/branding";
 
 function VerifyAgentContent() {
   const searchParams = useSearchParams();
@@ -51,7 +52,7 @@ function VerifyAgentContent() {
 
         <div className="space-y-2">
           <h1 className="text-2xl font-bold text-foreground">Agent Verification</h1>
-          <p className="text-muted-foreground text-sm">Fine My Property - Professional Network</p>
+          <p className="text-muted-foreground text-sm">{SITE_NAME} - Professional Network</p>
         </div>
 
         <div className="py-8 flex flex-col items-center gap-4">

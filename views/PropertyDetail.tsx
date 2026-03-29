@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { MapPin, Bed, Bath, Square, ArrowLeft, Phone, User, Heart, Play, Plus, Calendar } from "lucide-react";
 import { motion } from "framer-motion";
 import PropertyCard from "@/components/PropertyCard";
+import { SITE_NAME } from "@/lib/branding";
 
 const PropertyDetail = () => {
   const params = useParams<{ id: string }>();
@@ -154,8 +155,8 @@ const PropertyDetail = () => {
                 className="bg-card border border-border rounded-2xl p-6"
               >
                 <h2 className="font-heading font-semibold text-foreground text-base mb-3">Description</h2>
-                <p className="text-muted-foreground text-sm leading-relaxed break-words">
-                  If serene living is what you're after, this property is a must-see! This beautiful {property.bedrooms} BHK property is located in the heart of {property.location.split(",")[0]}.
+                <p className="text-muted-foreground text-sm leading-relaxed wrap-break-word">
+                  If serene living is what you&apos;re after, this property is a must-see! This beautiful {property.bedrooms} BHK property is located in the heart of {property.location.split(",")[0]}.
                   The property is {property.furnishing} and spans {property.area}. It features {property.bathrooms} bathroom{property.bathrooms > 1 ? "s" : ""} and
                   is perfect for families or professionals looking for a comfortable living space.
                   The locality offers excellent connectivity, nearby schools, hospitals, and shopping centers.
@@ -200,7 +201,7 @@ const PropertyDetail = () => {
               >
                 <h2 className="font-heading font-semibold text-foreground text-base mb-3">Floor Plans</h2>
                 <p className="text-muted-foreground text-sm leading-relaxed mb-4">
-                  Living Spaces are more easily interpreted. All-In-Ones color floor plan option clearly defines your listing's living spaces, making them obvious and clearly visible to your potential buyers/clients.
+                  Living Spaces are more easily interpreted. All-In-Ones color floor plan option clearly defines your listing&apos;s living spaces, making them obvious and clearly visible to your potential buyers/clients.
                 </p>
                 <div className="flex gap-2 mb-4">
                   {floors.map((floor) => (
@@ -294,10 +295,11 @@ const PropertyDetail = () => {
                     <User className="w-6 h-6 text-primary" />
                   </div>
                   <div className="min-w-0">
-                    <p className="font-heading font-semibold text-foreground text-sm break-words">
+                    <p className="font-heading font-semibold text-foreground text-sm wrap-break-word">
                       {property.ownerName || "Property Owner"}
                     </p>
-                    <p className="text-xs text-muted-foreground break-words">Listed by owner · No broker</p>
+                    <p className="text-xs text-muted-foreground wrap-break-word">Listed by owner · {SITE_NAME}</p>
+                    
                   </div>
                 </div>
 

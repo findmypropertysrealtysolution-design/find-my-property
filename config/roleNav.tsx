@@ -8,7 +8,6 @@ import {
   Users,
   BarChart3,
   CheckSquare,
-  Settings,
   type LucideIcon,
 } from "lucide-react";
 import type { UserRole } from "@/contexts/AuthContext";
@@ -49,7 +48,6 @@ const adminNav: NavItem[] = [
   { title: "Property Approval", url: "/admin/approvals", icon: CheckSquare },
   { title: "Agent Management", url: "/admin/agents", icon: Users },
   { title: "Analytics", url: "/admin/analytics", icon: BarChart3 },
-  { title: "Settings", url: "/admin/settings", icon: Settings },
 ];
 
 const dashboardTitles: Record<Exclude<UserRole, "admin">, string> = {
