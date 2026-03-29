@@ -7,10 +7,11 @@ import { useRouter } from "next/navigation";
 import { Building2, Smartphone } from "lucide-react";
 import { motion } from "framer-motion";
 import { useState } from "react";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth, User } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import Image from "next/image";
 import { SITE_NAME } from "@/lib/branding";
+import { getPostAuthRoute } from "@/lib/auth-redirect";
 
 const normalizePhone = (value: string) => {
   const trimmed = value.trim();
@@ -62,6 +63,40 @@ const Login = () => {
     });
   };
 
+
+const handleVerifyOtp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!otpSent) {
+      toast({
+        title: "OTP not sent",
+        description: "Request OTP first.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setVerifyingOtp(true);
+    const result = await loginWithPhone(phone, otp);
+    setVerifyingOtp(false);
+
+    if (!result.success) {
+      toast({
+        title: "Phone login failed",
+        description: "error" in result ? result.error : "Login failed",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const nextUser = JSON.parse(localStorage.getItem("nb_user") || "null") as User | null;
+    const from = new URLSearchParams(window.location.search).get("from");
+    const safeFrom =
+      from && from.startsWith("/") && from !== "/login" && from !== "/register"
+        ? from
+        : null;
+    router.replace(safeFrom || getPostAuthRoute(nextUser));
+  };
+
   
 
   return (
@@ -93,16 +128,16 @@ const Login = () => {
           </div>
         </motion.div>
       </div>
-    
+
       <div className="flex-1 flex items-center justify-center p-6 lg:p-12 relative overflow-y-auto overflow-x-hidden bg-muted/10">
         <div className="absolute inset-0 bg-grid-black/[0.02] -z-10" />
         <motion.div
           initial={{ opacity: 0, x: 20 }}
           animate={{ opacity: 1, x: 0 }}
-          className="w-full max-w-[400px] bg-background/60 backdrop-blur-xl border border-border/50 rounded-3xl p-8 shadow-2xl"
+          className="w-full max-w-100 bg-background/60 backdrop-blur-xl border border-border/50 rounded-3xl p-8 shadow-2xl"
         >
           <div className="flex flex-col items-center mb-8 text-center">
-            <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-primary to-primary-foreground/90 flex items-center justify-center shadow-lg shadow-primary/20 mb-6">
+            <div className="w-14 h-14 rounded-2xl bg-linear-to-tr from-primary to-primary-foreground/90 flex items-center justify-center shadow-lg shadow-primary/20 mb-6">
               <Building2 className="w-7 h-7 text-primary-foreground" />
             </div>
             <h1 className="font-heading text-3xl font-bold tracking-tight text-foreground mb-2">Welcome Back</h1>
@@ -111,7 +146,7 @@ const Login = () => {
             </p>
           </div>
 
-          <form onSubmit={handleSendOtp} className="space-y-6">
+          <form onSubmit={otpSent ? handleVerifyOtp : handleSendOtp} className="space-y-6">
             <div className="space-y-4">
               <div className="space-y-2">
                 <label className="text-sm font-medium leading-none text-foreground ml-1">
@@ -165,9 +200,9 @@ const Login = () => {
                 <Button
                   type="submit"
                   className="w-full h-12 rounded-xl text-base font-semibold shadow-md active:scale-[0.98] transition-all"
-                  disabled={otp.length < 4}
+                  disabled={verifyingOtp || otp.length < 4}
                 >
-                  {sendingOtp ? "Verifying..." : "Verify & Login"}
+                {verifyingOtp ? "Verifying..." : "Verify & Login"}
                 </Button>
                 <Button
                   type="button"
