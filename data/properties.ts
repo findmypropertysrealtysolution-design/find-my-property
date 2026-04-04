@@ -1,4 +1,4 @@
-import { Property } from "@/components/PropertyCard";
+import { Property } from "@/components/property/PropertyCard";
 
 export const sampleProperties: Property[] = [
   {

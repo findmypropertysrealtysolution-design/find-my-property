@@ -9,6 +9,15 @@ export function useProperties() {
   });
 }
 
+/** All properties as backend rows — for admin tables with extra columns. */
+export function useAdminProperties() {
+  return useQuery({
+    queryKey: ["properties", "raw"],
+    queryFn: api.getRawProperties,
+    staleTime: 60_000,
+  });
+}
+
 export function useMyProperties() {
   return useQuery({
     queryKey: ["properties", "my"],

@@ -1,4 +1,4 @@
-import type { Property, FurnishingStatus } from "@/components/PropertyCard";
+import type { Property, FurnishingStatus } from "@/components/property/PropertyCard";
 
 export enum ListingType {
   RENT = 'Rent',
@@ -44,6 +44,8 @@ export interface BackendProperty {
   videoUrl?: string;
   floorPlans?: Array<{ id?: string; floorName?: string; customName?: string; imageUrl: string }> | string;
   status?: PropertyStatus;
+  /** Assigned listing agent (user id), when set by admin or API */
+  assignedAgentId?: number;
 }
 
 const PLACEHOLDER_IMAGE = "https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=800&q=80";

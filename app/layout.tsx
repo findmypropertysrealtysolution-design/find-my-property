@@ -1,8 +1,8 @@
 import { DM_Sans, Plus_Jakarta_Sans } from "next/font/google";
 
 import "./globals.css";
-import { ThemeProvider } from "@/components/theme-provider";
-import { AppProviders } from "@/components/app-providers";
+import { ThemeProvider } from "@/contexts/theme-provider";
+import { AppProviders } from "@/contexts/app-providers";
 import { cn } from "@/lib/utils";
 
 const fontSans = DM_Sans({
@@ -30,9 +30,9 @@ export default function RootLayout({
           "font-[family-name:var(--font-body)]",
         )}
       >
-        <ThemeProvider>
+      
           <AppProviders>{children}</AppProviders>
-        </ThemeProvider>
+        
       </body>
     </html>
   );

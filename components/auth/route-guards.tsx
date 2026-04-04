@@ -1,7 +1,7 @@
 "use client";
 
 import type { ReactElement, ReactNode } from "react";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/contexts/auth-context";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { getPostAuthRoute } from "@/lib/auth-redirect";
