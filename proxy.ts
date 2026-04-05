@@ -4,7 +4,6 @@ import { FMP_ROLE_COOKIE, FMP_RT_COOKIE } from "@/lib/fmp-cookie";
 
 function hasReferenceToken(request: NextRequest): boolean {
   const v = request.cookies.get(FMP_RT_COOKIE)?.value;
-  console.log("v", v);
   return Boolean(v && v.trim().length > 0);
 }
 
@@ -18,6 +17,8 @@ function isPublicPath(pathname: string): boolean {
   if (pathname.startsWith("/onboarding")) return true;
   if (pathname.startsWith("/verify-agent")) return true;
   if (pathname.startsWith("/property/")) return true;
+  if (pathname.startsWith("/browse/")) return true;
+
   return false;
 }
 
