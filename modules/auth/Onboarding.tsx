@@ -10,12 +10,14 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { useAuth } from "@/contexts/auth-context";
 import { useToast } from "@/hooks/use-toast";
+import { useDetectCurrentLocation } from "@/hooks/use-detect-current-location";
 import { getPostAuthRoute } from "@/lib/auth-redirect";
 
 const Onboarding = () => {
   const { user, isAuthenticated, isAuthReady, updateProfile } = useAuth();
   const router = useRouter();
   const { toast } = useToast();
+  const { run: detectLocation, isPending: detectingLocation } = useDetectCurrentLocation();
 
   const [email, setEmail] = useState("");
   const [name, setName] = useState("");
@@ -25,7 +27,6 @@ const Onboarding = () => {
   const [locationCountry, setLocationCountry] = useState("");
   const [latitude, setLatitude] = useState<number | undefined>(undefined);
   const [longitude, setLongitude] = useState<number | undefined>(undefined);
-  const [detectingLocation, setDetectingLocation] = useState(false);
   const [savingProfile, setSavingProfile] = useState(false);
 
   useEffect(() => {
@@ -50,7 +51,31 @@ const Onboarding = () => {
   }, [isAuthReady, isAuthenticated, router, user]);
 
   const handleDetectLocation = async () => {
-    if (!navigator.geolocation) {
+    const outcome = await detectLocation();
+
+    if (outcome.status === "success") {
+      const { lat, lng, displayName, structured } = outcome.data;
+      setLatitude(lat);
+      setLongitude(lng);
+      setLocationAddress(displayName);
+      setLocationCity(structured.city ?? "");
+      setLocationState(structured.state ?? "");
+      setLocationCountry(structured.country ?? "");
+      toast({ title: "Location detected", description: "You can edit the fields if needed." });
+      return;
+    }
+
+    if (outcome.status === "partial") {
+      setLatitude(outcome.lat);
+      setLongitude(outcome.lng);
+      toast({
+        title: "Location fetched partially",
+        description: "Coordinates captured. Enter city/state/country manually if needed.",
+      });
+      return;
+    }
+
+    if (outcome.status === "unsupported") {
       toast({
         title: "Location unavailable",
         description: "Geolocation is not supported on this device. Please enter location manually.",
@@ -59,59 +84,20 @@ const Onboarding = () => {
       return;
     }
 
-    setDetectingLocation(true);
-    navigator.geolocation.getCurrentPosition(
-      async (position) => {
-        const lat = position.coords.latitude;
-        const lng = position.coords.longitude;
-        setLatitude(lat);
-        setLongitude(lng);
+    if (outcome.status === "denied") {
+      toast({
+        title: "Location permission denied",
+        description: "Please enter your location manually.",
+        variant: "destructive",
+      });
+      return;
+    }
 
-        try {
-          const response = await fetch(
-            `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}`,
-          );
-          const data = (await response.json()) as {
-            display_name?: string;
-            address?: {
-              city?: string;
-              town?: string;
-              village?: string;
-              state?: string;
-              country?: string;
-              county?: string;
-            };
-          };
-          setLocationAddress(data.display_name || "");
-          setLocationCity(
-            data.address?.city ||
-              data.address?.town ||
-              data.address?.village ||
-              data.address?.county ||
-              "",
-          );
-          setLocationState(data.address?.state || "");
-          setLocationCountry(data.address?.country || "");
-          toast({ title: "Location detected", description: "You can edit the fields if needed." });
-        } catch {
-          toast({
-            title: "Location fetched partially",
-            description: "Coordinates captured. Enter city/state/country manually if needed.",
-          });
-        } finally {
-          setDetectingLocation(false);
-        }
-      },
-      () => {
-        setDetectingLocation(false);
-        toast({
-          title: "Location permission denied",
-          description: "Please enter your location manually.",
-          variant: "destructive",
-        });
-      },
-      { enableHighAccuracy: true, timeout: 12000 },
-    );
+    toast({
+      title: "Could not get location",
+      description: outcome.message || "Try again or enter your address manually.",
+      variant: "destructive",
+    });
   };
 
   const handleSaveProfile = async (e: React.FormEvent) => {

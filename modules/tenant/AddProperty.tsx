@@ -107,18 +107,27 @@ const AddProperty = ({ initialData }: { initialData?: BackendProperty }) => {
 
       if (initialData?.id) {
         await api.updateProperty(String(initialData.id), payload);
-        toast({ title: "Property updated", description: "Your listing has been updated successfully." });
+        toast({
+          variant: "success",
+          title: "Property updated",
+          description: "Your listing has been saved successfully.",
+        });
       } else {
         await api.createProperty(payload);
-        toast({ title: "Property submitted", description: "Your listing has been created successfully." });
+        toast({
+          variant: "success",
+          title: "Property submitted",
+          description: "Your listing has been created successfully.",
+        });
       }
 
-      router.push(`/${user?.role}/listings`);
+      router.push("/listings");
     } catch (error) {
       toast({
-        title: "Unable to save property",
-        description: error instanceof Error ? error.message : "Please check your inputs and try again.",
         variant: "destructive",
+        title: "Could not save listing",
+        description:
+          error instanceof Error ? error.message : "Check your connection and fields, then try again.",
       });
     } finally {
       setLoading(false);
@@ -132,7 +141,7 @@ const AddProperty = ({ initialData }: { initialData?: BackendProperty }) => {
     <div className="max-w-3xl space-y-6">
       <div className="flex items-center gap-3">
         <Button variant="ghost" size="icon" asChild>
-          <Link href="/tenant/listings">
+          <Link href="/listings">
             <ArrowLeft className="h-4 w-4" />
           </Link>
         </Button>
@@ -150,7 +159,13 @@ const AddProperty = ({ initialData }: { initialData?: BackendProperty }) => {
         <motion.form
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          onSubmit={form.handleSubmit(onSubmit)}
+          onSubmit={form.handleSubmit(onSubmit, () => {
+            toast({
+              variant: "destructive",
+              title: "Check required fields",
+              description: "Fill in all fields marked with * and fix any errors below before saving.",
+            });
+          })}
           className="space-y-6"
         >
           <Accordion
@@ -231,7 +246,7 @@ const AddProperty = ({ initialData }: { initialData?: BackendProperty }) => {
               <Upload className="mr-2 h-4 w-4" /> {loading ? "Saving…" : initialData ? "Save Changes" : "Create Property"}
             </Button>
             <Button type="button" variant="outline" size="lg" asChild>
-              <Link href="/tenant/listings">Cancel</Link>
+              <Link href="/listings">Cancel</Link>
             </Button>
           </div>
         </motion.form>

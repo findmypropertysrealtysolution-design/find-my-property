@@ -28,7 +28,7 @@ export const PropertyOverview = () => {
           name="bedrooms"
           render={({ field }) => (
             <FormItem>
-              <FormLabel className="flex items-center gap-1.5 text-muted-foreground">
+              <FormLabel required className="flex items-center gap-1.5 text-muted-foreground">
                 <Bed className="w-3.5 h-3.5" /> Rooms
               </FormLabel>
               <Select onValueChange={field.onChange} defaultValue={field.value}>
@@ -54,7 +54,7 @@ export const PropertyOverview = () => {
           name="bathrooms"
           render={({ field }) => (
             <FormItem>
-              <FormLabel className="flex items-center gap-1.5 text-muted-foreground">
+              <FormLabel required className="flex items-center gap-1.5 text-muted-foreground">
                 <Bath className="w-3.5 h-3.5" /> Bathrooms
               </FormLabel>
               <Select onValueChange={field.onChange} defaultValue={field.value}>
@@ -80,7 +80,7 @@ export const PropertyOverview = () => {
           name="area"
           render={({ field }) => (
             <FormItem>
-              <FormLabel className="flex items-center gap-1.5 text-muted-foreground">
+              <FormLabel required className="flex items-center gap-1.5 text-muted-foreground">
                 <Square className="w-3.5 h-3.5" /> Area
               </FormLabel>
               <FormControl>
@@ -95,7 +95,7 @@ export const PropertyOverview = () => {
           name="yearBuilt"
           render={({ field }) => (
             <FormItem>
-              <FormLabel className="flex items-center gap-1.5 text-muted-foreground">
+              <FormLabel required className="flex items-center gap-1.5 text-muted-foreground">
                 <Calendar className="w-3.5 h-3.5" /> Year Built
               </FormLabel>
               <FormControl>
@@ -111,7 +111,7 @@ export const PropertyOverview = () => {
         name="price"
         render={({ field }) => (
           <FormItem>
-            <FormLabel>Price (₹)</FormLabel>
+            <FormLabel required>Price (₹)</FormLabel>
             <FormControl>
               <div className="relative max-w-xs">
                 <IndianRupee className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />

@@ -13,19 +13,6 @@ interface DashboardHeaderProps {
   title?: string;
 }
 
-function getProfilePath(role: string | undefined): string {
-  switch (role) {
-    case "tenant":
-      return "/tenant/profile";
-    case "agent":
-      return "/agent/profile";
-    case "admin":
-      return "/admin";
-    default:
-      return "/";
-  }
-}
-
 export default function DashboardHeader({ title }: DashboardHeaderProps) {
   const { user, logout } = useAuth();
   const router = useRouter();
@@ -50,7 +37,7 @@ export default function DashboardHeader({ title }: DashboardHeaderProps) {
         {user && (
           <>
             <Link
-              href={getProfilePath(user.role)}
+              href="/profile"
               className="flex items-center gap-2 rounded-full p-1 pr-2 hover:bg-muted/50 transition-colors min-w-0"
             >
               <Avatar className="h-8 w-8 shrink-0">

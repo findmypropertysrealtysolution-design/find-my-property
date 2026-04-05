@@ -1,6 +1,6 @@
 import { Building2, Heart, Phone, Mail } from "lucide-react";
 import Link from "next/link";
-import { SITE_NAME } from "@/lib/branding";
+import { SITE_NAME, SUPPORT_EMAIL } from "@/lib/branding";
 
 const Footer = () => {
   const settings = { siteName: SITE_NAME };
@@ -19,7 +19,7 @@ const Footer = () => {
               </span>
             </Link>
             <p className="text-sm text-muted-foreground max-w-xs wrap-break-word">
-              India's first proptech unicorn. Find your dream home without paying any brokerage.
+              {SITE_NAME} helps you find and list homes with verified details and direct owner contact.
             </p>
           </div>
 
@@ -28,7 +28,7 @@ const Footer = () => {
             <ul className="space-y-2 text-sm text-muted-foreground">
               <li><Link href="/properties" className="hover:text-primary transition-colors">Properties</Link></li>
               <li><Link href="/owner" className="hover:text-primary transition-colors">For Owners</Link></li>
-              <li><Link href="/tenant" className="hover:text-primary transition-colors">For Tenants</Link></li>
+              <li><Link href="/dashboard" className="hover:text-primary transition-colors">For Tenants</Link></li>
               <li><Link href="/sitemap" className="hover:text-primary transition-colors">Sitemap</Link></li>
             </ul>
           </div>
@@ -47,13 +47,13 @@ const Footer = () => {
             <h4 className="font-heading font-semibold text-foreground mb-4">Contact</h4>
             <ul className="space-y-2 text-sm text-muted-foreground wrap-break-word">
               <li className="flex items-center gap-2 min-w-0"><Phone className="w-4 h-4 shrink-0" /> <span className="min-w-0">+91 98765 43210</span></li>
-              <li className="flex items-center gap-2 min-w-0"><Mail className="w-4 h-4 shrink-0" /> <span className="min-w-0 break-all">support@nobroker.in</span></li>
+              <li className="flex items-center gap-2 min-w-0"><Mail className="w-4 h-4 shrink-0" /> <a href={`mailto:${SUPPORT_EMAIL}`} className="min-w-0 break-all hover:text-primary transition-colors">{SUPPORT_EMAIL}</a></li>
             </ul>
           </div>
         </div>
 
         <div className="mt-10 pt-6 border-t border-border flex flex-col sm:flex-row justify-between items-center gap-4">
-          <p className="text-xs text-muted-foreground">© 2026 {settings?.siteName || "NoBroker"}. All rights reserved.</p>
+          <p className="text-xs text-muted-foreground">© 2026 {settings?.siteName ?? SITE_NAME}. All rights reserved.</p>
           <p className="text-xs text-muted-foreground flex items-center gap-1">
             Made with <Heart className="w-3 h-3 text-accent" /> in India
           </p>

@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
 import {
   ArrowDown,
@@ -14,6 +15,7 @@ import {
   Eye,
   Filter,
   Loader2,
+  MoreVertical,
   Search,
   Users,
   X,
@@ -29,7 +31,8 @@ import {
   PropertyType,
   type BackendProperty,
 } from "@/lib/property-mapper";
-import type { Property } from "@/components/property/PropertyCard";
+import type { Property } from "@/modules/properties/PropertyCard";
+import { buildPropertyPath } from "@/lib/property-slug";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -37,6 +40,7 @@ import { Label } from "@/components/ui/label";
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuRadioGroup,
   DropdownMenuRadioItem,
@@ -69,7 +73,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetFooter,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
 
 type SortKey =
   | "id"
@@ -93,8 +105,7 @@ function formatPrice(p: BackendProperty) {
 }
 
 function areaSqFt(p: BackendProperty) {
-  const m = Number(p.areaSquareMeters ?? p.area ?? 0) || 0;
-  return Math.round(m * 10.7639);
+  return Math.round((Number(p.area) || 0) * 10.7639);
 }
 
 function isRentListing(p: BackendProperty) {
@@ -125,7 +136,7 @@ function compareRows(a: BackendProperty, b: BackendProperty, key: SortKey, dir: 
       return ((Number(a.price) || 0) - (Number(b.price) || 0)) * mul;
     case "bedrooms":
       return (
-        ((Number(a.bedrooms ?? a.rooms) || 0) - (Number(b.bedrooms ?? b.rooms) || 0)) * mul
+        ((Number(a.bedrooms) || 0) - (Number(b.bedrooms) || 0)) * mul
       );
     case "bathrooms":
       return ((Number(a.bathrooms) || 0) - (Number(b.bathrooms) || 0)) * mul;
@@ -182,6 +193,9 @@ function statusBadge(status: string) {
 const PROPERTY_TYPE_OPTIONS = ["all", ...Object.values(PropertyType)] as const;
 
 const PropertyApproval = () => {
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
   const queryClient = useQueryClient();
   const { data: rawRows = [], isLoading, isError, error } = useAdminProperties();
   const { data: agents, isLoading: agentsLoading } = useAgents();
@@ -197,7 +211,7 @@ const PropertyApproval = () => {
   const [priceMin, setPriceMin] = useState("");
   const [priceMax, setPriceMax] = useState("");
   const [agentFilter, setAgentFilter] = useState<string>("all");
-  const [advancedOpen, setAdvancedOpen] = useState(false);
+  const [filterSheetOpen, setFilterSheetOpen] = useState(false);
 
   const [sort, setSort] = useState<{ key: SortKey; dir: "asc" | "desc" }>({
     key: "id",
@@ -206,8 +220,7 @@ const PropertyApproval = () => {
 
   const [selectedProperty, setSelectedProperty] = useState<Property | null>(null);
 
-  const [showApproveDialog, setShowApproveDialog] = useState(false);
-  const [approveTargetId, setApproveTargetId] = useState<string | null>(null);
+  const approveIdFromUrl = searchParams.get("approve");
   const [selectedAgentId, setSelectedAgentId] = useState<string>("");
   const [isApproving, setIsApproving] = useState(false);
 
@@ -216,10 +229,18 @@ const PropertyApproval = () => {
   const [rejectTarget, setRejectTarget] = useState<string | null>(null);
   const [isRejecting, setIsRejecting] = useState(false);
 
-  const assignableAgents =
-    agentsList?.filter((a) => a.status === "active" || a.status === "pending") ?? [];
+  /** All agent-role users from the API; listing assignment does not use legacy agent status. */
+  const assignableAgents = agentsList ?? [];
 
-  /** Search + advanced filters only (status tab applied per panel below). */
+  const setApproveQuery = (id: string | null) => {
+    const params = new URLSearchParams(searchParams.toString());
+    if (id) params.set("approve", id);
+    else params.delete("approve");
+    const q = params.toString();
+    router.replace(q ? `${pathname}?${q}` : pathname, { scroll: false });
+  };
+
+  /** Search + drawer filters only (status tab applied per panel below). */
   const preparedRows = useMemo(() => {
     let rows = rawRows;
 
@@ -315,7 +336,7 @@ const PropertyApproval = () => {
     );
   };
 
-  const clearAdvanced = () => {
+  const clearFilters = () => {
     setCityFilter("");
     setListingFilter("all");
     setPropertyTypeFilter("all");
@@ -324,7 +345,7 @@ const PropertyApproval = () => {
     setAgentFilter("all");
   };
 
-  const hasAdvanced =
+  const hasActiveFilters =
     cityFilter.trim() !== "" ||
     listingFilter !== "all" ||
     propertyTypeFilter !== "all" ||
@@ -337,15 +358,19 @@ const PropertyApproval = () => {
   };
 
   const openApproveDialog = (id: string) => {
-    setApproveTargetId(id);
     setSelectedAgentId("");
-    setShowApproveDialog(true);
+    setApproveQuery(id);
+  };
+
+  const closeApproveDialog = () => {
+    setSelectedAgentId("");
+    setApproveQuery(null);
   };
 
   const confirmApprove = async () => {
-    if (!approveTargetId) return;
-    const agentId = Number(selectedAgentId);
-    if (!Number.isFinite(agentId) || agentId <= 0) {
+    if (!approveIdFromUrl) return;
+    const assignedAgentId = Number(selectedAgentId);
+    if (!Number.isFinite(assignedAgentId) || assignedAgentId <= 0) {
       toast({
         title: "Select an agent",
         description: "Choose who will be the listing agent for this property.",
@@ -355,11 +380,31 @@ const PropertyApproval = () => {
     }
     setIsApproving(true);
     try {
-      await api.approveProperty(approveTargetId, agentId);
+      await api.approveProperty(approveIdFromUrl, { assignedAgentId });
       toast({ title: "Property approved", description: "Listing agent has been assigned." });
-      setShowApproveDialog(false);
-      setApproveTargetId(null);
-      setSelectedAgentId("");
+      closeApproveDialog();
+      void queryClient.invalidateQueries({ queryKey: ["properties"] });
+    } catch (err) {
+      toast({
+        title: "Approval failed",
+        description: (err as Error)?.message || "Could not approve property.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsApproving(false);
+    }
+  };
+
+  const confirmApproveSkipAgent = async () => {
+    if (!approveIdFromUrl) return;
+    setIsApproving(true);
+    try {
+      await api.approveProperty(approveIdFromUrl, { skipAgentAssignment: true });
+      toast({
+        title: "Property approved",
+        description: "Approved without assigning a listing agent. You can assign one later.",
+      });
+      closeApproveDialog();
       void queryClient.invalidateQueries({ queryKey: ["properties"] });
     } catch (err) {
       toast({
@@ -411,10 +456,9 @@ const PropertyApproval = () => {
   const thumb = (p: BackendProperty) =>
     p.thumbnailUrl ||
     p.propertyImages?.[0] ||
-    p.imageUrls?.[0] ||
     "https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=200&q=80";
 
-  const agentLabel = (assignedAgentId?: number) => {
+  const agentLabel = (assignedAgentId?: number | null) => {
     if (assignedAgentId == null) return "—";
     const a = agentsList?.find((x) => x.id === assignedAgentId);
     return a ? `${a.name} (#${assignedAgentId})` : `#${assignedAgentId}`;
@@ -425,8 +469,8 @@ const PropertyApproval = () => {
       <div>
         <h2 className="mb-1 font-heading text-xl font-bold text-foreground">Property Approvals</h2>
         <p className="text-sm text-muted-foreground">
-          Review listings in a sortable table. Use search and filters to narrow results, then approve with an assigned
-          agent or reject with a reason.
+          Review listings in a sortable table. Use search and the filter drawer to narrow results, then approve with an
+          assigned agent (or skip assignment) or reject with a reason.
         </p>
       </div>
 
@@ -511,8 +555,8 @@ const PropertyApproval = () => {
               </DropdownMenu>
             </div>
 
-            <div className="flex w-full min-w-0 flex-1 flex-col gap-2 sm:max-w-md lg:max-w-lg">
-              <div className="relative">
+            <div className="flex w-full min-w-0 flex-1 gap-2 sm:max-w-md lg:max-w-lg">
+              <div className="relative w-full">
                 <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
                   placeholder="Search ID, title, city, address, type, agent id…"
@@ -521,106 +565,122 @@ const PropertyApproval = () => {
                   className="pl-9"
                 />
               </div>
-              <Collapsible open={advancedOpen} onOpenChange={setAdvancedOpen}>
-                <div className="flex flex-wrap items-center gap-2">
-                  <CollapsibleTrigger asChild>
+              <div className="flex flex-wrap items-center gap-2">
+                <Sheet open={filterSheetOpen} onOpenChange={setFilterSheetOpen}>
+                  <SheetTrigger asChild>
                     <Button type="button" variant="outline" size="sm" className="gap-2">
                       <Filter className="h-4 w-4" />
-                      Advanced filters
-                      {hasAdvanced ? (
+                      Filter
+                      {hasActiveFilters ? (
                         <Badge variant="secondary" className="px-1.5 py-0 text-xs">
                           On
                         </Badge>
                       ) : null}
                     </Button>
-                  </CollapsibleTrigger>
-                  {hasAdvanced ? (
-                    <Button type="button" variant="ghost" size="sm" onClick={clearAdvanced}>
-                      Clear filters
-                    </Button>
-                  ) : null}
-                </div>
-                <CollapsibleContent className="mt-3 space-y-4 rounded-lg border bg-muted/30 p-4">
-                  <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                    <div className="space-y-2">
-                      <Label htmlFor="ap-city">City contains</Label>
-                      <Input
-                        id="ap-city"
-                        placeholder="e.g. Mumbai"
-                        value={cityFilter}
-                        onChange={(e) => setCityFilter(e.target.value)}
-                      />
+                  </SheetTrigger>
+                  <SheetContent side="right" className="flex w-full flex-col gap-0 overflow-y-auto sm:max-w-md">
+                    <SheetHeader className="text-left">
+                      <SheetTitle>Filters</SheetTitle>
+                      <SheetDescription>
+                        Narrow by city, listing type, property type, price range, or assigned agent.
+                      </SheetDescription>
+                    </SheetHeader>
+                    <div className="flex flex-1 flex-col gap-4 py-6">
+                      <div className="space-y-2">
+                        <Label htmlFor="ap-city">City contains</Label>
+                        <Input
+                          id="ap-city"
+                          placeholder="e.g. Mumbai"
+                          value={cityFilter}
+                          onChange={(e) => setCityFilter(e.target.value)}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Listing</Label>
+                        <Select
+                          value={listingFilter}
+                          onValueChange={(v) => setListingFilter(v as "all" | "rent" | "sale")}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="All" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="all">All</SelectItem>
+                            <SelectItem value="rent">Rent / lease</SelectItem>
+                            <SelectItem value="sale">Sale</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Property type</Label>
+                        <Select value={propertyTypeFilter} onValueChange={setPropertyTypeFilter}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="All types" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {PROPERTY_TYPE_OPTIONS.map((opt) => (
+                              <SelectItem key={opt} value={opt}>
+                                {opt === "all" ? "All types" : opt}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="ap-min">Min price (INR)</Label>
+                        <Input
+                          id="ap-min"
+                          inputMode="numeric"
+                          placeholder="No minimum"
+                          value={priceMin}
+                          onChange={(e) => setPriceMin(e.target.value)}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="ap-max">Max price (INR)</Label>
+                        <Input
+                          id="ap-max"
+                          inputMode="numeric"
+                          placeholder="No maximum"
+                          value={priceMax}
+                          onChange={(e) => setPriceMax(e.target.value)}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Listing agent</Label>
+                        <Select value={agentFilter} onValueChange={setAgentFilter}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Any agent" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="all">Any</SelectItem>
+                            {(agentsList ?? []).map((a) => (
+                              <SelectItem key={a.id} value={String(a.id)}>
+                                {a.name} (#{a.id})
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
                     </div>
-                    <div className="space-y-2">
-                      <Label>Listing</Label>
-                      <Select
-                        value={listingFilter}
-                        onValueChange={(v) => setListingFilter(v as "all" | "rent" | "sale")}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="All" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="all">All</SelectItem>
-                          <SelectItem value="rent">Rent / lease</SelectItem>
-                          <SelectItem value="sale">Sale</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Property type</Label>
-                      <Select value={propertyTypeFilter} onValueChange={setPropertyTypeFilter}>
-                        <SelectTrigger>
-                          <SelectValue placeholder="All types" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {PROPERTY_TYPE_OPTIONS.map((opt) => (
-                            <SelectItem key={opt} value={opt}>
-                              {opt === "all" ? "All types" : opt}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="ap-min">Min price (INR)</Label>
-                      <Input
-                        id="ap-min"
-                        inputMode="numeric"
-                        placeholder="No minimum"
-                        value={priceMin}
-                        onChange={(e) => setPriceMin(e.target.value)}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="ap-max">Max price (INR)</Label>
-                      <Input
-                        id="ap-max"
-                        inputMode="numeric"
-                        placeholder="No maximum"
-                        value={priceMax}
-                        onChange={(e) => setPriceMax(e.target.value)}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Listing agent</Label>
-                      <Select value={agentFilter} onValueChange={setAgentFilter}>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Any agent" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="all">Any</SelectItem>
-                          {(agentsList ?? []).map((a) => (
-                            <SelectItem key={a.id} value={String(a.id)}>
-                              {a.name} (#{a.id})
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-                </CollapsibleContent>
-              </Collapsible>
+                    <SheetFooter className="flex-col gap-2 sm:flex-row sm:justify-end">
+                      {hasActiveFilters ? (
+                        <Button type="button" variant="ghost" className="w-full sm:w-auto" onClick={clearFilters}>
+                          Clear filters
+                        </Button>
+                      ) : null}
+                      <Button type="button" className="w-full sm:w-auto" onClick={() => setFilterSheetOpen(false)}>
+                        Done
+                      </Button>
+                    </SheetFooter>
+                  </SheetContent>
+                </Sheet>
+                {hasActiveFilters ? (
+                  <Button type="button" variant="ghost" size="sm" onClick={clearFilters}>
+                    Clear filters
+                  </Button>
+                ) : null}
+              </div>
             </div>
           </div>
 
@@ -630,7 +690,7 @@ const PropertyApproval = () => {
               <p className="font-medium text-foreground">
                 No {statusFilter} listings match your filters
               </p>
-              <p className="mt-1 text-sm">Try clearing search or advanced filters.</p>
+              <p className="mt-1 text-sm">Try clearing search or filters.</p>
             </div>
           ) : (
             <motion.div
@@ -758,7 +818,7 @@ const PropertyApproval = () => {
                           </TableCell>
                           <TableCell className="whitespace-nowrap text-sm">{formatPrice(p)}</TableCell>
                           <TableCell className="hidden sm:table-cell text-center text-sm">
-                            {Number(p.bedrooms ?? p.rooms) || "—"}
+                            {Number(p.bedrooms) || "—"}
                           </TableCell>
                           <TableCell className="hidden sm:table-cell text-center text-sm">
                             {Number(p.bathrooms) || "—"}
@@ -782,33 +842,41 @@ const PropertyApproval = () => {
                                 <Eye className="h-4 w-4" />
                               </Button>
                               <Button size="icon" variant="ghost" className="h-8 w-8" asChild>
-                                <Link href={`/property/${p.id}`} title="Public page">
+                                <Link href={buildPropertyPath(p.id, p.title)} title="Public page">
                                   <ExternalLink className="h-4 w-4" />
                                 </Link>
                               </Button>
                               {statusFilter === "pending" && (
-                                <>
-                                  <Button
-                                    size="sm"
-                                    variant="outline"
-                                    className="h-8 border-emerald-200 text-emerald-600 hover:bg-emerald-50"
-                                    type="button"
-                                    onClick={() => openApproveDialog(String(p.id))}
-                                  >
-                                    <Check className="mr-1 h-3.5 w-3.5" />
-                                    Approve
-                                  </Button>
-                                  <Button
-                                    size="sm"
-                                    variant="outline"
-                                    className="h-8 border-destructive/30 text-destructive hover:bg-destructive/10"
-                                    type="button"
-                                    onClick={() => openRejectDialog(String(p.id))}
-                                  >
-                                    <X className="mr-1 h-3.5 w-3.5" />
-                                    Reject
-                                  </Button>
-                                </>
+                                <DropdownMenu>
+                                  <DropdownMenuTrigger asChild>
+                                    <Button
+                                      size="icon"
+                                      variant="ghost"
+                                      className="h-8 w-8"
+                                      type="button"
+                                      title="More actions"
+                                    >
+                                      <MoreVertical className="h-4 w-4" />
+                                      <span className="sr-only">More actions</span>
+                                    </Button>
+                                  </DropdownMenuTrigger>
+                                  <DropdownMenuContent align="end" className="w-44">
+                                    <DropdownMenuItem
+                                      className="gap-2 text-emerald-700 focus:text-emerald-700"
+                                      onClick={() => openApproveDialog(String(p.id))}
+                                    >
+                                      <Check className="h-4 w-4" />
+                                      Approve
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem
+                                      className="gap-2 text-destructive focus:text-destructive"
+                                      onClick={() => openRejectDialog(String(p.id))}
+                                    >
+                                      <X className="h-4 w-4" />
+                                      Reject
+                                    </DropdownMenuItem>
+                                  </DropdownMenuContent>
+                                </DropdownMenu>
                               )}
                             </div>
                           </TableCell>
@@ -825,6 +893,9 @@ const PropertyApproval = () => {
         <DialogContent className="max-w-lg">
           <DialogHeader>
             <DialogTitle>{selectedProperty?.title}</DialogTitle>
+            <DialogDescription className="sr-only">
+              Listing preview: beds, baths, area, status, owner, and price.
+            </DialogDescription>
           </DialogHeader>
           {selectedProperty && (
             <div className="space-y-4">
@@ -858,13 +929,9 @@ const PropertyApproval = () => {
       </Dialog>
 
       <Dialog
-        open={showApproveDialog}
+        open={!!approveIdFromUrl}
         onOpenChange={(open) => {
-          setShowApproveDialog(open);
-          if (!open) {
-            setApproveTargetId(null);
-            setSelectedAgentId("");
-          }
+          if (!open) closeApproveDialog();
         }}
       >
         <DialogContent className="max-w-md">
@@ -900,8 +967,8 @@ const PropertyApproval = () => {
                       <div className="min-w-0 flex-1 text-sm">
                         <span className="font-medium text-foreground">{agent.name}</span>
                         <span className="block truncate text-xs text-muted-foreground">{agent.email}</span>
-                        {agent.company ? (
-                          <span className="text-xs text-muted-foreground">{agent.company}</span>
+                        {agent.locationCity ? (
+                          <span className="text-xs text-muted-foreground">{agent.locationCity}</span>
                         ) : null}
                       </div>
                     </label>
@@ -910,9 +977,18 @@ const PropertyApproval = () => {
               </ScrollArea>
             </div>
           )}
-          <DialogFooter>
-            <Button variant="outline" type="button" onClick={() => setShowApproveDialog(false)} disabled={isApproving}>
+          <DialogFooter className="flex-col gap-2 sm:flex-row sm:flex-wrap sm:justify-end">
+            <Button variant="outline" type="button" onClick={closeApproveDialog} disabled={isApproving}>
               Cancel
+            </Button>
+            <Button
+              variant="secondary"
+              type="button"
+              disabled={isApproving}
+              onClick={() => void confirmApproveSkipAgent()}
+            >
+              {isApproving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+              Skip assignment
             </Button>
             <Button
               type="button"
@@ -940,8 +1016,7 @@ const PropertyApproval = () => {
           <DialogHeader>
             <DialogTitle>Reject property</DialogTitle>
             <DialogDescription>
-              Provide a reason for the owner or agent. This is sent in the request body to{" "}
-              <code className="rounded bg-muted px-1 text-xs">POST /properties/:id/reject</code>.
+              Provide a reason for the owner or agent.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-2">

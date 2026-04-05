@@ -5,21 +5,22 @@ import { Heart, Bell, Eye, Building2, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import PropertyCard from "@/components/property/PropertyCard";
-import { sampleProperties } from "@/data/properties";
+import { PropertyCardSkeleton } from "@/components/skeletons/property-card-skeleton";
 import { useProperties } from "@/hooks/use-properties";
 import { useAuth } from "@/contexts/auth-context";
 
+/** No backend APIs yet — show placeholders instead of fake counts */
 const stats = [
-  { label: "Saved Properties", value: "8", icon: Heart },
-  { label: "Active Alerts", value: "3", icon: Bell },
-  { label: "Recently Viewed", value: "15", icon: Eye },
-  { label: "Applications", value: "2", icon: Building2 },
+  { label: "Saved Properties", value: "—", icon: Heart },
+  { label: "Active Alerts", value: "—", icon: Bell },
+  { label: "Recently Viewed", value: "—", icon: Eye },
+  { label: "Applications", value: "—", icon: Building2 },
 ];
 
 const TenantOverview = () => {
   const { user } = useAuth();
-  const { data } = useProperties();
-  const properties = data?.length ? data : sampleProperties;
+  const { data, isLoading } = useProperties();
+  const properties = data ?? [];
   const greeting = new Date().getHours() < 12 ? "Good morning" : new Date().getHours() < 18 ? "Good afternoon" : "Good evening";
 
   return (
@@ -29,6 +30,9 @@ const TenantOverview = () => {
           {greeting}, {user?.name?.split(" ")[0] || "there"} 👋
         </h2>
         <p className="text-sm text-muted-foreground">Find your perfect home today</p>
+        <p className="mt-2 text-xs text-muted-foreground/90">
+          Dashboard stats (saved, alerts, history) are not connected to the API yet.
+        </p>
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
@@ -54,14 +58,25 @@ const TenantOverview = () => {
         </Button>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-        {properties
-          .filter((p) => p.type === "rent")
-          .slice(0, 3)
-          .map((property, i) => (
-            <PropertyCard key={property.id} property={property} index={i} />
-          ))}
+      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+        {isLoading ? (
+          <>
+            <PropertyCardSkeleton />
+            <PropertyCardSkeleton />
+            <PropertyCardSkeleton />
+          </>
+        ) : (
+          properties
+            .filter((p) => p.type === "rent")
+            .slice(0, 3)
+            .map((property, i) => (
+              <PropertyCard key={property.id} property={property} index={i} />
+            ))
+        )}
       </div>
+      {!isLoading && properties.filter((p) => p.type === "rent").length === 0 && (
+        <p className="text-sm text-muted-foreground">No rentals to show yet.</p>
+      )}
     </div>
   );
 };

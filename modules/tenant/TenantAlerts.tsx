@@ -5,6 +5,7 @@ import { Bell, MapPin, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 
+/** Demo rows until a saved-alerts API exists */
 const alerts = [
   { id: "1", label: "2BHK in HSR Layout", type: "rent", priceRange: "₹15K - ₹25K", matches: 5 },
   { id: "2", label: "3BHK in Whitefield", type: "rent", priceRange: "₹25K - ₹40K", matches: 3 },
@@ -17,6 +18,9 @@ const TenantAlerts = () => (
       <div>
         <h2 className="font-heading text-xl font-bold text-foreground mb-1">My Alerts</h2>
         <p className="text-sm text-muted-foreground">Get notified when matching properties are listed</p>
+        <p className="mt-1 text-xs text-amber-700 dark:text-amber-500/90">
+          Demo data — connect an alerts API to persist real saved searches.
+        </p>
       </div>
       <Button size="sm"><Bell className="w-4 h-4 mr-1" /> New Alert</Button>
     </div>

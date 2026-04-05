@@ -27,7 +27,7 @@ export const BasicInformation = () => {
           name="propertyType"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Property Type</FormLabel>
+              <FormLabel required>Property Type</FormLabel>
               <Select onValueChange={field.onChange} defaultValue={field.value}>
                 <FormControl>
                   <SelectTrigger>
@@ -50,7 +50,7 @@ export const BasicInformation = () => {
           name="listingType"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Listing Type</FormLabel>
+              <FormLabel required>Listing Type</FormLabel>
               <Select onValueChange={field.onChange} defaultValue={field.value}>
                 <FormControl>
                   <SelectTrigger>
@@ -73,7 +73,7 @@ export const BasicInformation = () => {
         name="title"
         render={({ field }) => (
           <FormItem>
-            <FormLabel>Property Title</FormLabel>
+            <FormLabel required>Property Title</FormLabel>
             <FormControl>
               <Input placeholder="e.g. Spacious 3BHK in Whitefield" {...field} />
             </FormControl>

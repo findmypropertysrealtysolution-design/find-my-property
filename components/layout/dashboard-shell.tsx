@@ -25,9 +25,9 @@ export function DashboardShell({
     <SidebarProvider>
       <div className="flex w-full h-full">
         <DashboardSidebar items={items} />
-        <div className="flex-1 flex flex-col min-w-0">
-          {/* <DashboardHeader title={title} /> */}
-          <main className="flex-1 min-w-0 p-6 bg-background overflow-x-hidden">{children}</main>
+        <div className="flex min-h-0 min-w-0 flex-1 flex-col">
+          <DashboardHeader title={title} />
+          <main className="min-h-0 flex-1 overflow-x-hidden bg-background p-4 sm:p-6">{children}</main>
         </div>
       </div>
     </SidebarProvider>

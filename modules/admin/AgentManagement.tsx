@@ -1,24 +1,27 @@
 "use client";
 
-import { motion } from "framer-motion";
-import { 
-  Users, 
-  UserPlus, 
-  Mail, 
-  Phone, 
-  Building2, 
-  Trash2, 
-  Edit2, 
-  CheckCircle2, 
-  XCircle,
+import { type ColumnDef } from "@tanstack/react-table";
+import { useQueryClient } from "@tanstack/react-query";
+import Link from "next/link";
+import {
+  UserPlus,
+  Mail,
+  Phone,
+  MapPin,
+  Trash2,
+  Edit2,
+  CheckCircle2,
   Clock,
   MoreVertical,
   Search,
   Loader2,
-  ExternalLink
+  Building2,
 } from "lucide-react";
 import { useAgents } from "@/hooks/use-agents";
+import { useAdminProperties } from "@/hooks/use-properties";
+import { api, type Agent } from "@/lib/api";
 import { Button } from "@/components/ui/button";
+import { DataTable } from "@/components/ui/data-table";
 import { Input } from "@/components/ui/input";
 import {
   DropdownMenu,
@@ -37,20 +40,38 @@ import {
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { useState } from "react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { useToast } from "@/hooks/use-toast";
+import { useCallback, useMemo, useState } from "react";
 import { format } from "date-fns";
 import { normalizePhone } from "@/helpers";
+import { buildPropertyPath } from "@/lib/property-slug";
 
 const AgentManagement = () => {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
   const { data: agents, isLoading, createAgent, deleteAgent, isCreating } = useAgents();
+  const { data: rawProperties, isLoading: isLoadingProperties } = useAdminProperties();
   const [searchTerm, setSearchTerm] = useState("");
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [newAgent, setNewAgent] = useState({ name: "", email: "", phone: "" });
+  const [assignOpen, setAssignOpen] = useState(false);
+  const [assignAgent, setAssignAgent] = useState<Agent | null>(null);
+  const [assignPropertyId, setAssignPropertyId] = useState<string>("");
+  const [isAssigning, setIsAssigning] = useState(false);
 
-  const filteredAgents = agents?.filter(agent => 
-    agent.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    agent.email.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredAgents = agents?.filter((agent) => {
+    const q = searchTerm.toLowerCase();
+    const name = (agent.name ?? "").toLowerCase();
+    const email = (agent.email ?? "").toLowerCase();
+    return name.includes(q) || email.includes(q);
+  });
 
   const handleAddAgent = async () => {
     try {
@@ -62,16 +83,173 @@ const AgentManagement = () => {
       await createAgent(payload);
       setIsAddModalOpen(false);
       setNewAgent({ name: "", email: "", phone: "" });
-    } catch (error) {
+    } catch {
       // Toast handled in hook
     }
   };
 
-  const getStatusBadge = (status: string, verified: boolean) => {
-    if (!verified) return <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200"><Clock className="w-3 h-3 mr-1" /> Pending Verify</Badge>;
-    if (status === "active") return <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200"><CheckCircle2 className="w-3 h-3 mr-1" /> Active</Badge>;
-    return <Badge variant="secondary">Inactive</Badge>;
+  const handleAssignProperty = async () => {
+    if (!assignAgent || !assignPropertyId) return;
+    setIsAssigning(true);
+    try {
+      await api.updateProperty(assignPropertyId, { assignedAgentId: assignAgent.id });
+      await queryClient.invalidateQueries({ queryKey: ["agents"] });
+      await queryClient.invalidateQueries({ queryKey: ["properties", "raw"] });
+      toast({ title: "Property assigned", description: "The listing agent has been updated." });
+      setAssignOpen(false);
+      setAssignAgent(null);
+      setAssignPropertyId("");
+    } catch (e) {
+      toast({
+        title: "Could not assign property",
+        description: e instanceof Error ? e.message : "Request failed",
+        variant: "destructive",
+      });
+    } finally {
+      setIsAssigning(false);
+    }
   };
+
+  const openAssignDialog = useCallback((agent: Agent) => {
+    setAssignAgent(agent);
+    setAssignPropertyId("");
+    setAssignOpen(true);
+  }, []);
+
+  const getStatusBadge = useCallback((agent: Agent) => {
+    if (!agent.isEmailVerified) {
+      return (
+        <Badge variant="outline" className="border-amber-200 bg-amber-50 text-amber-700">
+          <Clock className="mr-1 w-3 h-3" /> Pending Verify
+        </Badge>
+      );
+    }
+    return (
+      <Badge variant="outline" className="border-emerald-200 bg-emerald-50 text-emerald-700">
+        <CheckCircle2 className="mr-1 w-3 h-3" /> Active
+      </Badge>
+    );
+  }, []);
+
+  const columns = useMemo<ColumnDef<Agent>[]>(
+    () => [
+      {
+        id: "agent",
+        header: "Agent Info",
+        cell: ({ row }) => {
+          const agent = row.original;
+          return (
+            <div className="flex flex-col">
+              <span className="font-medium text-foreground">{agent.name ?? "—"}</span>
+              <div className="mt-0.5 flex items-center text-xs text-muted-foreground">
+                <Mail className="mr-1 w-3 h-3" /> {agent.email ?? "—"}
+              </div>
+              {agent.phone ? (
+                <div className="mt-0.5 flex items-center text-xs text-muted-foreground">
+                  <Phone className="mr-1 w-3 h-3" /> {agent.phone}
+                </div>
+              ) : null}
+            </div>
+          );
+        },
+      },
+      {
+        id: "properties",
+        header: "Assigned properties",
+        cell: ({ row }) => {
+          const list = row.original.properties ?? [];
+          if (list.length === 0) {
+            return <span className="text-xs text-muted-foreground">—</span>;
+          }
+          return (
+            <div className="flex max-w-[220px] flex-col gap-1">
+              {list.slice(0, 4).map((p) => (
+                <Link
+                  key={p.id}
+                  href={buildPropertyPath(p.id, p.title)}
+                  className="truncate text-left text-xs font-medium text-primary underline-offset-4 hover:underline"
+                >
+                  {p.title}
+                </Link>
+              ))}
+              {list.length > 4 ? (
+                <span className="text-[10px] text-muted-foreground">+{list.length - 4} more</span>
+              ) : null}
+            </div>
+          );
+        },
+      },
+      {
+        id: "location",
+        header: "Location",
+        cell: ({ row }) => {
+          const agent = row.original;
+          const city = agent.locationCity;
+          const region = [agent.locationState, agent.locationCountry].filter(Boolean).join(", ");
+          const label = [city, region].filter(Boolean).join(", ") || "—";
+          return (
+            <div className="flex items-center text-muted-foreground">
+              <MapPin className="mr-2 w-4 h-4 text-primary opacity-50" />
+              {label}
+            </div>
+          );
+        },
+      },
+      {
+        id: "status",
+        header: "Status",
+        cell: ({ row }) => getStatusBadge(row.original),
+      },
+      {
+        accessorKey: "createdAt",
+        header: "Joined",
+        cell: ({ row }) => (
+          <span className="text-xs text-muted-foreground">
+            {format(new Date(row.original.createdAt), "MMM d, yyyy")}
+          </span>
+        ),
+      },
+      {
+        id: "actions",
+        header: () => <div className="text-right">Actions</div>,
+        cell: ({ row }) => {
+          const agent = row.original;
+          return (
+            <div className="text-right">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon" className="h-8 w-8">
+                    <MoreVertical className="w-4 h-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-48">
+                  <DropdownMenuItem className="cursor-pointer gap-2">
+                    <Edit2 className="w-3.5 h-3.5" /> Edit Details
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    className="cursor-pointer gap-2"
+                    onSelect={(e) => {
+                      e.preventDefault();
+                      openAssignDialog(agent);
+                    }}
+                  >
+                    <Building2 className="w-3.5 h-3.5" /> Assign property
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    className="cursor-pointer gap-2 text-destructive focus:text-destructive"
+                    onClick={() => deleteAgent(agent.id)}
+                  >
+                    <Trash2 className="w-3.5 h-3.5" /> Delete Agent
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          );
+        },
+      },
+    ],
+    [deleteAgent, getStatusBadge, openAssignDialog],
+  );
 
   return (
     <div className="space-y-6">
@@ -142,6 +320,71 @@ const AgentManagement = () => {
             </form>
           </DialogContent>
         </Dialog>
+
+        <Dialog
+          open={assignOpen}
+          onOpenChange={(open) => {
+            setAssignOpen(open);
+            if (!open) {
+              setAssignAgent(null);
+              setAssignPropertyId("");
+            }
+          }}
+        >
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>Assign property</DialogTitle>
+              <DialogDescription>
+                Link a listing to{" "}
+                <span className="font-medium text-foreground">{assignAgent?.name ?? "this agent"}</span>.
+                They will receive leads for that property.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="grid gap-4 py-2">
+              <div className="grid gap-2">
+                <Label htmlFor="assign-property">Property</Label>
+                <Select
+                  value={assignPropertyId}
+                  onValueChange={setAssignPropertyId}
+                  disabled={isLoadingProperties}
+                >
+                  <SelectTrigger id="assign-property" className="w-full">
+                    <SelectValue placeholder={isLoadingProperties ? "Loading properties…" : "Select a property"} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {(rawProperties ?? []).map((p) => (
+                      <SelectItem key={p.id} value={String(p.id)}>
+                        {p.title}
+                        {p.city ? ` — ${p.city}` : ""}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <DialogFooter>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => {
+                  setAssignOpen(false);
+                  setAssignAgent(null);
+                  setAssignPropertyId("");
+                }}
+              >
+                Cancel
+              </Button>
+              <Button
+                type="button"
+                disabled={!assignPropertyId || isAssigning}
+                onClick={() => void handleAssignProperty()}
+              >
+                {isAssigning ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                Assign
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
 
       {/* Search & Stats */}
@@ -158,86 +401,13 @@ const AgentManagement = () => {
       </div>
 
       {/* Agents Table */}
-      <div className="bg-card border border-border rounded-xl overflow-hidden shadow-sm">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm border-collapse">
-            <thead>
-              <tr className="bg-muted/50 border-b border-border">
-                <th className="px-6 py-4 font-semibold text-foreground">Agent Info</th>
-                <th className="px-6 py-4 font-semibold text-foreground">Company</th>
-                <th className="px-6 py-4 font-semibold text-foreground">Status</th>
-                <th className="px-6 py-4 font-semibold text-foreground">Joined</th>
-                <th className="px-6 py-4 font-semibold text-foreground text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-border">
-              {isLoading ? (
-                <tr>
-                  <td colSpan={5} className="px-6 py-12 text-center text-muted-foreground italic">
-                    <Loader2 className="w-6 h-6 animate-spin mx-auto mb-2 text-primary/40" />
-                    Fetching agents...
-                  </td>
-                </tr>
-              ) : filteredAgents?.length === 0 ? (
-                <tr>
-                  <td colSpan={5} className="px-6 py-12 text-center text-muted-foreground italic">
-                    No agents found matching your search.
-                  </td>
-                </tr>
-              ) : (
-                filteredAgents?.map((agent) => (
-                  <tr key={agent.id} className="hover:bg-muted/30 transition-colors group">
-                    <td className="px-6 py-4">
-                      <div className="flex flex-col">
-                        <span className="font-medium text-foreground">{agent.name}</span>
-                        <div className="flex items-center text-xs text-muted-foreground mt-0.5">
-                          <Mail className="w-3 h-3 mr-1" /> {agent.email}
-                        </div>
-                        {agent.phone && (
-                          <div className="flex items-center text-xs text-muted-foreground mt-0.5">
-                            <Phone className="w-3 h-3 mr-1" /> {agent.phone}
-                          </div>
-                        )}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 text-muted-foreground">
-                      <div className="flex items-center">
-                        <Building2 className="w-4 h-4 mr-2 opacity-50 text-primary" />
-                        {agent.company || "N/A"}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      {getStatusBadge(agent.status, agent.isVerified)}
-                    </td>
-                    <td className="px-6 py-4 text-xs text-muted-foreground">
-                      {format(new Date(agent.createdAt), "MMM d, yyyy")}
-                    </td>
-                    <td className="px-6 py-4 text-right">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon" className="h-8 w-8">
-                            <MoreVertical className="w-4 h-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="w-40">
-                          <DropdownMenuItem className="gap-2 cursor-pointer">
-                            <Edit2 className="w-3.5 h-3.5" /> Edit Details
-                          </DropdownMenuItem>
-                          <DropdownMenuItem 
-                            className="gap-2 text-destructive focus:text-destructive cursor-pointer"
-                            onClick={() => deleteAgent(agent.id)}
-                          >
-                            <Trash2 className="w-3.5 h-3.5" /> Delete Agent
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
+      <div className="overflow-hidden rounded-xl border border-border bg-card shadow-sm">
+        <DataTable
+          columns={columns}
+          data={filteredAgents ?? []}
+          isLoading={isLoading}
+          emptyMessage="No agents found matching your search."
+        />
       </div>
     </div>
   );

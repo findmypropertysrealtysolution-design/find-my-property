@@ -2,22 +2,28 @@
 
 import { Heart } from "lucide-react";
 import PropertyCard from "@/components/property/PropertyCard";
-import { sampleProperties } from "@/data/properties";
+import { PropertyCardSkeleton } from "@/components/skeletons/property-card-skeleton";
 import { useProperties } from "@/hooks/use-properties";
 
 const TenantFavorites = () => {
-  const { data } = useProperties();
-  const favorites = (data?.length ? data : sampleProperties).slice(0, 3);
+  const { data, isLoading } = useProperties();
+  const favorites = (data ?? []).slice(0, 3);
 
   return (
     <div className="space-y-6">
       <div>
         <h2 className="font-heading text-xl font-bold text-foreground mb-1">My Favorites</h2>
-        <p className="text-sm text-muted-foreground">Properties you've saved</p>
+        <p className="text-sm text-muted-foreground">Properties you have saved</p>
       </div>
 
-      {favorites.length > 0 ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+      {isLoading ? (
+        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+          <PropertyCardSkeleton />
+          <PropertyCardSkeleton />
+          <PropertyCardSkeleton />
+        </div>
+      ) : favorites.length > 0 ? (
+        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
           {favorites.map((p, i) => (
             <PropertyCard key={p.id} property={p} index={i} />
           ))}

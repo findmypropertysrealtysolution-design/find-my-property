@@ -5,7 +5,8 @@ import HeroSection from "@/components/layout/HeroSection"
 import PropertyCard from "@/components/property/PropertyCard"
 import Footer from "@/components/layout/Footer"
 import AuthGateModal from "@/components/auth/AuthGateModal"
-import { sampleProperties } from "@/data/properties"
+import { PropertyCardSkeleton } from "@/components/skeletons/property-card-skeleton"
+import { PropertyGridSkeleton } from "@/components/skeletons/property-grid-skeleton"
 import { useAuth } from "@/contexts/auth-context"
 import { useProperties } from "@/hooks/use-properties"
 import { useState } from "react"
@@ -30,21 +31,21 @@ import { SITE_NAME } from "@/lib/branding"
 const features = [
   {
     icon: Wallet,
-    title: "Zero Brokerage",
+    title: "Fair pricing",
     description:
-      "Save thousands by connecting directly with property owners. No middlemen, no hidden fees.",
+      "Connect directly with owners and avoid unnecessary middleman fees on your next move.",
   },
   {
     icon: Shield,
-    title: "Verified Listings",
+    title: "Verified listings",
     description:
-      "Every property is verified by our team. What you see is what you get.",
+      "Listings are reviewed so photos and details stay honest and up to date.",
   },
   {
     icon: Users,
-    title: "Direct Owner Connect",
+    title: "Direct owner contact",
     description:
-      "Chat, call, or schedule visits directly with owners. No broker interference.",
+      "Chat, call, or schedule visits directly with owners — no unnecessary intermediaries.",
   },
 ]
 
@@ -71,7 +72,7 @@ const howItWorks = [
     step: 4,
     icon: Wallet,
     title: "Move In",
-    desc: "Zero brokerage. Sign and move in.",
+    desc: "Transparent pricing. Sign and move in.",
   },
 ]
 
@@ -110,11 +111,8 @@ const testimonials = [
 
 const Index = () => {
   const { isAuthenticated, isAuthReady } = useAuth()
-  const { data } = useProperties()
-  const featuredProperties = (data?.length ? data : sampleProperties).slice(
-    0,
-    4
-  )
+  const { data, isLoading } = useProperties()
+  const featuredProperties = (data ?? []).slice(0, 4)
   const [showAuthGate, setShowAuthGate] = useState(false)
   const [pendingPropertyId, setPendingPropertyId] = useState<string | null>(
     null
@@ -142,8 +140,7 @@ const Index = () => {
               Why Choose {SITE_NAME}?
             </h2>
             <p className="mx-auto max-w-lg wrap-break-word text-muted-foreground">
-              We eliminate brokers from the real estate equation, saving you
-              time and money.
+              A simpler way to search and list — clear information, direct contact, less friction.
             </p>
           </div>
           <div className="mx-auto grid max-w-4xl grid-cols-1 gap-8 md:grid-cols-3">
@@ -179,8 +176,7 @@ const Index = () => {
               How It Works
             </h2>
             <p className="mx-auto max-w-lg text-muted-foreground">
-              Find or list a property in four simple steps. No brokers, no
-              hidden charges.
+              Find or list a property in four simple steps — no hidden charges.
             </p>
           </div>
           <div className="mx-auto grid max-w-5xl grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-4">
@@ -269,56 +265,76 @@ const Index = () => {
       {/* Featured Properties */}
       <section className="py-20">
         <div className="container mx-auto px-4">
-          <div className="mb-10 flex items-center justify-between">
-            <div>
-              <h2 className="font-heading text-3xl font-bold text-foreground">
+          <div className="mb-10 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+            <div className="min-w-0">
+              <h2 className="font-heading text-2xl font-bold text-foreground sm:text-3xl">
                 Featured Properties
               </h2>
-              <p className="mt-2 max-w-md text-muted-foreground">
-                Smarter search. Real insights. Get real value on your next
-                property
+              <p className="mt-2 max-w-md text-sm text-muted-foreground sm:text-base">
+                Hand-picked listings to explore on any screen size.
               </p>
             </div>
-            <Button variant="outline" asChild className="hidden sm:flex">
+            <Button variant="outline" asChild className="hidden w-full shrink-0 sm:flex sm:w-auto">
               <Link href="/properties">
                 View All <ArrowRight className="ml-2 h-4 w-4" />
               </Link>
             </Button>
           </div>
-          {/* Desktop grid */}
-          <div className="hidden gap-6 sm:grid sm:grid-cols-2 lg:grid-cols-4">
-            {featuredProperties.map((property, i) => (
-              <div
-                key={property.id}
-                onClickCapture={(e) =>
-                  handlePropertyCardClick(
-                    e as unknown as React.MouseEvent,
-                    property.id
-                  )
-                }
-                className="cursor-pointer"
-              >
-                <PropertyCard property={property} index={i} />
+          {isLoading ? (
+            <>
+              <div className="hidden sm:block">
+                <PropertyGridSkeleton count={4} columns="featured" />
               </div>
-            ))}
-          </div>
-          {/* Mobile horizontal scroll */}
-          <div className="scrollbar-hide -mx-4 flex snap-x snap-mandatory gap-4 overflow-x-auto px-4 pb-4 sm:hidden">
-            {featuredProperties.map((property, i) => (
-              <div
-                key={property.id}
-                className="min-w-[75vw] cursor-pointer snap-start"
-                onClickCapture={(e) =>
-                  handlePropertyCardClick(
-                    e as unknown as React.MouseEvent,
-                    property.id
-                  )
-                }
-              >
-                <PropertyCard property={property} index={i} />
+              <div className="scrollbar-hide -mx-4 flex snap-x snap-mandatory gap-4 overflow-x-auto px-4 pb-4 sm:hidden">
+                {Array.from({ length: 4 }).map((_, i) => (
+                  <div key={i} className="min-w-[75vw] snap-start">
+                    <PropertyCardSkeleton />
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
+            </>
+          ) : featuredProperties.length === 0 ? (
+            <p className="text-center text-sm text-muted-foreground py-12">
+              No featured listings yet. Check back soon.
+            </p>
+          ) : (
+            <>
+              {/* Desktop grid */}
+              <div className="hidden gap-6 sm:grid sm:grid-cols-2 lg:grid-cols-4">
+                {featuredProperties.map((property, i) => (
+                  <div
+                    key={property.id}
+                    onClickCapture={(e) =>
+                      handlePropertyCardClick(
+                        e as unknown as React.MouseEvent,
+                        property.id
+                      )
+                    }
+                    className="cursor-pointer"
+                  >
+                    <PropertyCard property={property} index={i} />
+                  </div>
+                ))}
+              </div>
+              {/* Mobile horizontal scroll */}
+              <div className="scrollbar-hide -mx-4 flex snap-x snap-mandatory gap-4 overflow-x-auto px-4 pb-4 sm:hidden">
+                {featuredProperties.map((property, i) => (
+                  <div
+                    key={property.id}
+                    className="min-w-[75vw] cursor-pointer snap-start"
+                    onClickCapture={(e) =>
+                      handlePropertyCardClick(
+                        e as unknown as React.MouseEvent,
+                        property.id
+                      )
+                    }
+                  >
+                    <PropertyCard property={property} index={i} />
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
           <div className="mt-6 text-center sm:hidden">
             <Button variant="outline" asChild>
               <Link href="/properties">
@@ -366,8 +382,7 @@ const Index = () => {
               What Our Users Say
             </h2>
             <p className="mx-auto max-w-lg text-muted-foreground">
-              Join millions who found their home or tenant without paying
-              brokerage.
+              Join people who found their next home or tenant through {SITE_NAME}.
             </p>
           </div>
           <div className="mx-auto grid max-w-5xl grid-cols-1 gap-8 md:grid-cols-3">
@@ -382,7 +397,7 @@ const Index = () => {
               >
                 <Quote className="mb-3 h-8 w-8 text-primary/30" />
                 <p className="mb-4 text-sm leading-relaxed text-foreground">
-                  &quot{t.quote}&quot
+                  &ldquo;{t.quote}&rdquo;
                 </p>
                 <div className="mb-1 flex items-center gap-2">
                   {Array.from({ length: t.rating }).map((_, j) => (
@@ -428,9 +443,8 @@ const Index = () => {
             <h2 className="mb-4 font-heading text-3xl font-bold text-primary-foreground md:text-4xl">
               Are You a Property Owner?
             </h2>
-            <p className="mx-auto mb-8 max-w-lg text-primary-foreground/80">
-              List your property for free and find verified tenants or buyers
-              without paying any brokerage.
+            <p className="mx-auto mb-8 max-w-lg text-primary-foreground/85">
+              List your property and reach serious tenants or buyers — simple, transparent, built for {SITE_NAME} users.
             </p>
             <Button size="lg" variant="secondary" asChild>
               <Link href="/owner">

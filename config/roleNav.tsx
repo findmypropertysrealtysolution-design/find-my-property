@@ -19,39 +19,41 @@ export interface NavItem {
   icon: LucideIcon;
 }
 
+/** Flat routes under app/(roles-routes); see segment page.tsx files. */
 const tenantNav: NavItem[] = [
-  { title: "Overview", url: "/tenant", icon: LayoutDashboard },
-  { title: "My Listings", url: "/tenant/listings", icon: Building2 },
-  { title: "Browse", url: "/tenant/properties", icon: Search },
-  { title: "Favorites", url: "/tenant/favorites", icon: Heart },
-  { title: "Alerts", url: "/tenant/alerts", icon: Bell },
-  { title: "Profile", url: "/tenant/profile", icon: UserCircle },
+  { title: "Overview", url: "/dashboard", icon: LayoutDashboard },
+  { title: "My Listings", url: "/listings", icon: Building2 },
+  { title: "Browse", url: "/", icon: Search },
+  { title: "Favorites", url: "/favorites", icon: Heart },
+  { title: "Alerts", url: "/alerts", icon: Bell },
+  { title: "Profile", url: "/profile", icon: UserCircle },
 ];
 
 const agentNav: NavItem[] = [
-  { title: "Overview", url: "/agent", icon: LayoutDashboard },
-  { title: "My Listings", url: "/agent/listings", icon: Building2 },
-  { title: "Browse", url: "/agent/properties", icon: Search },
-  { title: "Favorites", url: "/agent/favorites", icon: Heart },
-  { title: "Leads", url: "/agent/leads", icon: Users },
-  { title: "Reports", url: "/agent/reports", icon: BarChart3 },
-  { title: "Profile", url: "/agent/profile", icon: UserCircle },
+  { title: "Overview", url: "/dashboard", icon: LayoutDashboard },
+  { title: "My Listings", url: "/listings", icon: Building2 },
+  { title: "Browse", url: "/", icon: Search },
+  { title: "Favorites", url: "/favorites", icon: Heart },
+  { title: "Leads", url: "/leads", icon: Users },
+  { title: "Reports", url: "/reports", icon: BarChart3 },
+  { title: "Profile", url: "/profile", icon: UserCircle },
 ];
 
 const adminNav: NavItem[] = [
-  { title: "Overview", url: "/admin", icon: LayoutDashboard },
-  { title: "Property Approval", url: "/admin/approvals", icon: CheckSquare },
-  { title: "Agent Management", url: "/admin/agents", icon: Users },
-  { title: "My Listings", url: "/admin/listings", icon: Building2 },
-  { title: "All properties", url: "/admin/properties", icon: LayoutList },
-  { title: "Favorites", url: "/admin/favorites", icon: Heart },
-  { title: "Analytics", url: "/admin/analytics", icon: BarChart3 },
-  { title: "Profile", url: "/admin/profile", icon: UserCircle },
+  { title: "Overview", url: "/dashboard", icon: LayoutDashboard },
+  { title: "Property Approval", url: "/approvals", icon: CheckSquare },
+  { title: "Agent Management", url: "/agents", icon: Users },
+  { title: "My Listings", url: "/listings", icon: Building2 },
+  { title: "All properties", url: "/properties", icon: LayoutList },
+  { title: "Favorites", url: "/favorites", icon: Heart },
+  { title: "Analytics", url: "/analytics", icon: BarChart3 },
+  { title: "Profile", url: "/profile", icon: UserCircle },
 ];
 
-const dashboardTitles: Record<Exclude<UserRole, "admin">, string> = {
+const dashboardTitles: Record<UserRole, string> = {
   tenant: "Tenant Dashboard",
   agent: "Agent Dashboard",
+  admin: "Admin Dashboard",
 };
 
 export function getNavItemsForRole(role: UserRole | undefined): NavItem[] {
@@ -61,14 +63,14 @@ export function getNavItemsForRole(role: UserRole | undefined): NavItem[] {
     case "agent":
       return agentNav;
     case "admin":
-      return agentNav; // admin on shared pages (e.g. property detail) sees agent-style nav
+      return adminNav;
     default:
       return tenantNav;
   }
 }
 
 export function getDashboardTitleForRole(role: UserRole | undefined): string {
-  if (!role || role === "admin") return "Dashboard";
+  if (!role) return "Dashboard";
   return dashboardTitles[role];
 }
 

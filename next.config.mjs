@@ -1,5 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+    /** Enables `"use cache"`, `cacheTag`, `cacheLife`, and tag invalidation via `revalidateTag`. */
+    cacheComponents: true,
     images: {
         remotePatterns: [
             {

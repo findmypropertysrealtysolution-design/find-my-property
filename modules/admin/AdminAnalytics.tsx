@@ -24,6 +24,9 @@ const AdminAnalytics = () => {
       <div>
         <h2 className="font-heading text-xl font-bold text-foreground mb-1">Analytics</h2>
         <p className="text-sm text-muted-foreground">Platform performance overview</p>
+        <p className="mt-2 rounded-lg border border-border bg-muted/40 px-3 py-2 text-xs text-muted-foreground">
+          Sample metrics for layout only — wire your analytics backend or Plausible/GA to replace these values.
+        </p>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">

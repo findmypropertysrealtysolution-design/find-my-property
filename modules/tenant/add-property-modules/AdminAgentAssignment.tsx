@@ -25,7 +25,7 @@ export const AdminAgentAssignment = () => {
   const { control } = useFormContext<PropertyFormValues>();
   const { data: agents, isLoading } = useAgents();
 
-  const options = agents?.filter((a) => a.isEmailVerified || a.isPhoneVerified) ?? [];
+  const options = agents?.filter((a) => a.isEmailVerified) ?? [];
   const NONE = "__none__";
 
   return (

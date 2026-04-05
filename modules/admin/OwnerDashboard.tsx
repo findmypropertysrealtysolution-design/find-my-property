@@ -27,8 +27,8 @@ const OwnerDashboard = () => {
             <h1 className="font-heading text-3xl md:text-4xl font-bold text-foreground mb-3">
               List Your Property for <span className="text-primary">Free</span>
             </h1>
-            <p className="text-muted-foreground max-w-lg mx-auto">
-              Reach millions of tenants and buyers directly. Zero brokerage, maximum visibility.
+            <p className="text-muted-foreground max-w-lg mx-auto px-1 text-sm sm:text-base">
+              Reach tenants and buyers directly with maximum visibility for your listing.
             </p>
           </div>
 

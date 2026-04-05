@@ -3,7 +3,7 @@
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import PropertyCard from "@/components/property/PropertyCard";
-import { sampleProperties } from "@/data/properties";
+import { PropertyCardSkeleton } from "@/components/skeletons/property-card-skeleton";
 import { useProperties } from "@/hooks/use-properties";
 import { motion } from "framer-motion";
 import { Heart, Bell, Clock, Search, Shield, Headphones } from "lucide-react";
@@ -18,8 +18,8 @@ const perks = [
 ];
 
 const TenantDashboard = () => {
-  const { data } = useProperties();
-  const properties = data?.length ? data : sampleProperties;
+  const { data, isLoading } = useProperties();
+  const properties = data ?? [];
 
   return (
     <div className="min-h-screen bg-background">
@@ -31,8 +31,8 @@ const TenantDashboard = () => {
             <h1 className="font-heading text-3xl md:text-4xl font-bold text-foreground mb-3">
               Find Your Dream Home <span className="text-accent">Today</span>
             </h1>
-            <p className="text-muted-foreground max-w-lg mx-auto">
-              Browse thousands of verified properties. No brokerage, no hassle.
+            <p className="text-muted-foreground max-w-lg mx-auto px-1 text-sm sm:text-base">
+              Browse verified properties with clear details and direct contact options.
             </p>
             <Button size="lg" className="mt-6" asChild>
               <Link href="/properties">
@@ -67,14 +67,26 @@ const TenantDashboard = () => {
               <Clock className="w-5 h-5 text-primary" />
               <h2 className="font-heading text-2xl font-bold text-foreground">Recommended For You</h2>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {properties
-                .filter((p) => p.type === "rent")
-                .slice(0, 3)
-                .map((property, i) => (
-                  <PropertyCard key={property.id} property={property} index={i} />
-                ))}
+            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+              {isLoading ? (
+                <>
+                  <PropertyCardSkeleton />
+                  <PropertyCardSkeleton />
+                  <PropertyCardSkeleton />
+                </>
+              ) : (
+                properties
+                  .filter((p) => p.type === "rent")
+                  .slice(0, 3)
+                  .map((property, i) => (
+                    <PropertyCard key={property.id} property={property} index={i} />
+                  ))
+              )}
             </div>
+            {!isLoading &&
+              properties.filter((p) => p.type === "rent").length === 0 && (
+                <p className="text-center text-sm text-muted-foreground">No rentals to show yet.</p>
+              )}
           </div>
         </div>
       </div>

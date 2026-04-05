@@ -109,7 +109,7 @@ const handleVerifyOtp = async (e?: React.SubmitEvent<HTMLFormElement>) => {
               fill
               priority
               className="object-cover"
-              sizes="100vw"
+              sizes="(max-width: 1023px) 0px, 50vw"
             />
         <motion.div
           initial={{ opacity: 0, y: 20 }}

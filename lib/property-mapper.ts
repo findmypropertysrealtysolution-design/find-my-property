@@ -1,89 +1,99 @@
-import type { Property, FurnishingStatus } from "@/components/property/PropertyCard";
+import type { Property } from "@/lib/property-view-model";
+import type { FloorPlanDto, PropertyWithRelations } from "@/schema/property";
 
-export enum ListingType {
-  RENT = 'Rent',
-  SALE = 'Sale',
-  LEASE = 'Lease',
-}
+/** API property row + optional `creator` / `agent` (see `propertyWithRelationsSchema`). */
+export type BackendProperty = PropertyWithRelations;
 
-export enum PropertyType {
-  HOUSE = 'House',
-  APARTMENT = 'Apartment',
-  VILLA = 'Villa',
-  TOWNHOME = 'Townhome',
-}
+/** Admin / filters — aligned with `propertyStatusSchema`. */
+export const PropertyStatus = {
+  PENDING: "Pending",
+  APPROVED: "Approved",
+  REJECTED: "Rejected",
+} as const;
 
-export enum PropertyStatus {
-  PENDING = 'Pending',
-  APPROVED = 'Approved',
-  REJECTED = 'Rejected',
-}
-
-export interface BackendProperty {
-  id: number;
-  title: string;
-  description: string;
-  price: number;
-  currency: string;
-  listingType: ListingType | string;
-  propertyType: PropertyType | string;
-  address: string;
-  locality?: string;
-  city: string;
-  country?: string;
-  rooms?: number;
-  bedrooms?: number;
-  bathrooms: number;
-  areaSquareMeters?: number;
-  area?: number;
-  yearBuilt: number;
-  amenities: string[];
-  imageUrls?: string[];
-  propertyImages?: string[];
-  thumbnailUrl?: string;
-  videoUrl?: string;
-  floorPlans?: Array<{ id?: string; floorName?: string; customName?: string; imageUrl: string }> | string;
-  status?: PropertyStatus;
-  /** Assigned listing agent (user id), when set by admin or API */
-  assignedAgentId?: number;
-}
-
-const PLACEHOLDER_IMAGE = "https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=800&q=80";
+/** Admin filters — aligned with `propertyTypeSchema`. */
+export const PropertyType = {
+  HOUSE: "House",
+  APARTMENT: "Apartment",
+  VILLA: "Villa",
+  TOWNHOME: "Townhome",
+} as const;
 
 export function mapBackendProperty(property: BackendProperty): Property {
-  // Normalize listingType to Rent or Sale
-  const isRent = property.listingType?.toLowerCase() === "rent" || property.listingType?.toLowerCase() === "lease";
-  
+  const isRent = property.listingType === "Rent" || property.listingType === "Lease";
+
   const formattedPrice = new Intl.NumberFormat("en-IN", {
     style: "currency",
     currency: property.currency || "INR",
     maximumFractionDigits: 0,
   }).format(Number(property.price) || 0);
 
-  // Convert sq meters to sq ft if area is not provided directly
-  const areaValue = property.area || property.areaSquareMeters || 0;
-  const areaSqFt = Math.round((Number(areaValue) || 0) * 10.7639);
+  const areaValue = Number(property.area) || 0;
+  const areaSqFt = Math.round(areaValue * 10.7639);
 
-  const images = property.propertyImages?.length 
-    ? property.propertyImages 
-    : (property.imageUrls?.length ? property.imageUrls : [PLACEHOLDER_IMAGE]);
+  const images = property.propertyImages?.length ? property.propertyImages : [];
+  const primaryImage = property.thumbnailUrl || images[0] || "";
+
+  const amenities =
+    property.amenities?.filter((a) => Boolean(a && String(a).trim())) ?? [];
+  const floorPlans = normalizeFloorPlans(property.floorPlans);
+
+  const creator = property.creator;
+  const agent = property.agent;
 
   return {
     id: String(property.id),
     title: property.title || "Untitled Property",
+    description: property.description ?? undefined,
     location: [property.address, property.locality, property.city].filter(Boolean).join(", "),
     price: formattedPrice,
     priceLabel: isRent ? "/month" : "",
     priceValue: Number(property.price) || 0,
     type: isRent ? "rent" : "buy",
-    bedrooms: Number(property.bedrooms || property.rooms) || 0,
+    listingType: property.listingType,
+    propertyType: property.propertyType,
+    status: property.status,
+    currency: property.currency,
+    bedrooms: Number(property.bedrooms) || 0,
     bathrooms: Number(property.bathrooms) || 0,
     area: `${areaSqFt.toLocaleString("en-IN")} sq.ft`,
-    image: property.thumbnailUrl || images[0],
-    images,
+    image: primaryImage,
+    images: images.length ? images : undefined,
     isVerified: property.status === PropertyStatus.APPROVED,
-    furnishing: "unfurnished" as Extract<FurnishingStatus, "unfurnished">,
-    ownerName: "Owner",
-    status: property.status,
+    furnishing: "unfurnished",
+    ownerName: creator?.name?.trim() || "Owner",
+    ownerPhone: creator?.phone?.trim() || undefined,
+    agentName: agent?.name?.trim() || undefined,
+    agentPhone: agent?.phone?.trim() || undefined,
+    amenities: amenities.length ? amenities : undefined,
+    floorPlans,
+    videoUrl: property.videoUrl ?? undefined,
+    yearBuilt: Number(property.yearBuilt) || undefined,
+    assignedAgentId: property.assignedAgentId ?? null,
   };
+}
+
+function normalizeFloorPlans(
+  raw: BackendProperty["floorPlans"],
+): Property["floorPlans"] {
+  if (!raw) return undefined;
+  let rows: Array<{ floorName?: string; customName?: string; imageUrl?: string }>;
+  if (typeof raw === "string") {
+    try {
+      const parsed = JSON.parse(raw) as unknown;
+      rows = Array.isArray(parsed) ? parsed : [];
+    } catch {
+      return undefined;
+    }
+  } else {
+    rows = raw;
+  }
+  const mapped: FloorPlanDto[] = rows
+    .filter((fp) => fp?.imageUrl && String(fp.imageUrl).trim())
+    .map((fp) => ({
+      floorName: fp.floorName?.trim() || "Floor",
+      customName: fp.customName?.trim() || undefined,
+      imageUrl: String(fp.imageUrl).trim(),
+    }));
+  return mapped.length ? mapped : undefined;
 }

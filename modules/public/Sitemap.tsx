@@ -25,30 +25,31 @@ const sections = [
   {
     title: "Tenant",
     links: [
-      { href: "/tenant", label: "Tenant Dashboard" },
-      { href: "/tenant/listings", label: "My Listings" },
-      { href: "/tenant/favorites", label: "Favorites" },
-      { href: "/tenant/alerts", label: "Alerts" },
-      { href: "/tenant/profile", label: "Profile" },
+      { href: "/dashboard", label: "Dashboard" },
+      { href: "/listings", label: "My Listings" },
+      { href: "/favorites", label: "Favorites" },
+      { href: "/alerts", label: "Alerts" },
+      { href: "/profile", label: "Profile" },
     ],
   },
   {
     title: "Agent",
     links: [
-      { href: "/agent", label: "Agent Dashboard" },
-      { href: "/agent/listings", label: "My Listings" },
-      { href: "/agent/leads", label: "Leads" },
-      { href: "/agent/reports", label: "Reports" },
-      { href: "/agent/profile", label: "Profile" },
+      { href: "/dashboard", label: "Dashboard" },
+      { href: "/listings", label: "My Listings" },
+      { href: "/leads", label: "Leads" },
+      { href: "/reports", label: "Reports" },
+      { href: "/profile", label: "Profile" },
     ],
   },
   {
     title: "Admin",
     links: [
-      { href: "/admin", label: "Admin Dashboard" },
-      { href: "/admin/approvals", label: "Property Approval" },
-      { href: "/admin/agents", label: "Agent Management" },
-      { href: "/admin/analytics", label: "Analytics" },
+      { href: "/dashboard", label: "Dashboard" },
+      { href: "/approvals", label: "Property Approval" },
+      { href: "/agents", label: "Agent Management" },
+      { href: "/analytics", label: "Analytics" },
+      { href: "/properties", label: "All properties" },
     ],
   },
 ];
@@ -95,7 +96,7 @@ const Sitemap = () => {
                     </div>
                     <ul className="space-y-2">
                       {section.links.map((link) => (
-                        <li key={link.href}>
+                        <li key={link.href + link.label}>
                           <Link
                             href={link.href}
                             className="text-sm text-muted-foreground hover:text-primary transition-colors break-words"
@@ -112,7 +113,7 @@ const Sitemap = () => {
 
             <div className="mt-10 p-4 rounded-xl bg-muted/50 border border-border">
               <p className="text-sm text-muted-foreground">
-                <strong className="text-foreground">Note:</strong> Individual property pages (e.g. /property/1) are
+                <strong className="text-foreground">Note:</strong> Individual property pages (e.g. /property/3BHK-house-1) are
                 linked from the{" "}
                 <Link href="/properties" className="text-primary hover:underline">
                   Browse Properties

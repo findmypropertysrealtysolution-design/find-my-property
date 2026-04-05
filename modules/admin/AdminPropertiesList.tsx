@@ -13,7 +13,9 @@ import {
   Search,
 } from "lucide-react";
 import { useAdminProperties } from "@/hooks/use-properties";
+import { useAgents } from "@/hooks/use-agents";
 import type { BackendProperty } from "@/lib/property-mapper";
+import { buildPropertyPath } from "@/lib/property-slug";
 import { PropertyStatus } from "@/lib/property-mapper";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -47,7 +49,7 @@ function formatPrice(p: BackendProperty) {
 }
 
 function areaSqFt(p: BackendProperty) {
-  const m = Number(p.areaSquareMeters ?? p.area ?? 0) || 0;
+  const m = Number(p.area ?? 0) || 0;
   return Math.round(m * 10.7639);
 }
 
@@ -80,9 +82,7 @@ function compareRows(a: BackendProperty, b: BackendProperty, key: SortKey, dir: 
     case "price":
       return ((Number(a.price) || 0) - (Number(b.price) || 0)) * mul;
     case "bedrooms":
-      return (
-        ((Number(a.bedrooms ?? a.rooms) || 0) - (Number(b.bedrooms ?? b.rooms) || 0)) * mul
-      );
+      return ((Number(a.bedrooms) || 0) - (Number(b.bedrooms) || 0)) * mul;
     case "bathrooms":
       return ((Number(a.bathrooms) || 0) - (Number(b.bathrooms) || 0)) * mul;
     case "area":
@@ -121,16 +121,28 @@ function compareRows(a: BackendProperty, b: BackendProperty, key: SortKey, dir: 
 
 const AdminPropertiesList = () => {
   const { data: rows = [], isLoading, isError, error } = useAdminProperties();
+  const { data: agents = [] } = useAgents();
   const [search, setSearch] = useState("");
   const [sort, setSort] = useState<{ key: SortKey; dir: "asc" | "desc" }>({
     key: "id",
     dir: "desc",
   });
 
+  const agentNameById = useMemo(() => {
+    const m = new Map<number, string>();
+    for (const a of agents) {
+      const label = (a.name ?? a.email ?? "").trim() || `Agent #${a.id}`;
+      m.set(a.id, label);
+    }
+    return m;
+  }, [agents]);
+
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
     if (!q) return rows;
     return rows.filter((p) => {
+      const agentLabel =
+        p.assignedAgentId != null ? agentNameById.get(p.assignedAgentId) ?? String(p.assignedAgentId) : "";
       const hay = [
         String(p.id),
         p.title,
@@ -140,12 +152,13 @@ const AdminPropertiesList = () => {
         String(p.listingType ?? ""),
         String(p.propertyType ?? ""),
         String(p.status ?? ""),
+        agentLabel,
       ]
         .join(" ")
         .toLowerCase();
       return hay.includes(q);
     });
-  }, [rows, search]);
+  }, [rows, search, agentNameById]);
 
   const sorted = useMemo(() => {
     const copy = [...filtered];
@@ -334,7 +347,7 @@ const AdminPropertiesList = () => {
                   </TableCell>
                   <TableCell className="whitespace-nowrap">{formatPrice(p)}</TableCell>
                   <TableCell className="hidden sm:table-cell text-center">
-                    {Number(p.bedrooms ?? p.rooms) || "—"}
+                    {Number(p.bedrooms) || "—"}
                   </TableCell>
                   <TableCell className="hidden sm:table-cell text-center">
                     {Number(p.bathrooms) || "—"}
@@ -343,18 +356,31 @@ const AdminPropertiesList = () => {
                     {areaSqFt(p).toLocaleString("en-IN")}
                   </TableCell>
                   <TableCell>{statusBadge(p.status)}</TableCell>
-                  <TableCell className="hidden lg:table-cell text-right font-mono text-xs">
-                    {p.assignedAgentId != null ? p.assignedAgentId : "—"}
+                  <TableCell
+                    className="hidden lg:table-cell max-w-[160px] text-right text-sm text-foreground"
+                    title={
+                      p.assignedAgentId != null
+                        ? `${agentNameById.get(p.assignedAgentId) ?? "Agent"} (id ${p.assignedAgentId})`
+                        : undefined
+                    }
+                  >
+                    {p.assignedAgentId != null ? (
+                      <span className="line-clamp-2 break-words">
+                        {agentNameById.get(p.assignedAgentId) ?? `Agent #${p.assignedAgentId}`}
+                      </span>
+                    ) : (
+                      <span className="text-muted-foreground">—</span>
+                    )}
                   </TableCell>
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-1">
                       <Button variant="ghost" size="icon" className="h-8 w-8" asChild>
-                        <Link href={`/property/${p.id}`} title="View public page">
+                        <Link href={buildPropertyPath(p.id, p.title)} title="View public page">
                           <ExternalLink className="h-4 w-4" />
                         </Link>
                       </Button>
                       <Button variant="ghost" size="icon" className="h-8 w-8" asChild>
-                        <Link href={`/admin/edit-property/${p.id}`} title="Edit as admin">
+                        <Link href={`/edit-property/${p.id}`} title="Edit as admin">
                           <Pencil className="h-4 w-4" />
                         </Link>
                       </Button>
