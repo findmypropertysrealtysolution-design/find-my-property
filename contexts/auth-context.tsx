@@ -3,11 +3,7 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from "react";
 import { api, type AuthUser, type UserRole } from "@/lib/api";
 import { clearFmpRoleCookieClient, setFmpRoleCookieClient } from "@/lib/fmp-cookie";
-import {
-  AUTH_ERROR_REFRESH_FAILED,
-  AUTH_ERROR_SESSION_EXPIRED,
-  NB_REFRESH_TOKEN_KEY,
-} from "@/end-points/http";
+import { AUTH_ERROR_REFRESH_FAILED, AUTH_ERROR_SESSION_EXPIRED } from "@/end-points/http";
 
 export type { UserRole };
 
@@ -63,7 +59,7 @@ interface AuthContextType {
     longitude?: number;
   }) => Promise<AuthResult>;
   deleteAccount: () => Promise<{ success: true } | FailedResult>;
-  logout: () => void;
+  logout: () => Promise<void>;
   updateUser: (updates: Partial<Pick<User, "name">>) => void;
   updateProfileLocal: (updates: UserProfile) => void;
   isAuthenticated: boolean;
@@ -167,7 +163,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       if (e instanceof Error && e.message === AUTH_ERROR_REFRESH_FAILED) {
         return;
       }
-      void logout();
+      await logout();
     }
   };
 
@@ -197,7 +193,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const deleteAccount = async () => {
     try {
       await api.deleteMe();
-      logout();
+      await logout();
       return { success: true as const };
     } catch (error) {
       return {
@@ -213,7 +209,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setToken(null);
     localStorage.removeItem("nb_user");
     localStorage.removeItem("nb_token");
-    localStorage.removeItem(NB_REFRESH_TOKEN_KEY);
     try {
       await api.logout();
     } catch {

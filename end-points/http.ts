@@ -1,20 +1,18 @@
 export const DEFAULT_LOCAL_API_URL = "http://localhost:3005";
 
-export const NB_REFRESH_TOKEN_KEY = "nb_refresh_token";
-
-/** Thrown when `/auth/refresh` returns 401 — session cleared, redirecting to `/logout`. */
+/** Thrown when `/auth/refresh` returns 401 — session cleared. */
 export const AUTH_ERROR_SESSION_EXPIRED = "SESSION_EXPIRED";
 
-/** Refresh token present but `/auth/refresh` failed (e.g. 5xx); access token may still work. */
+/** Refresh failed (e.g. network / 5xx); access token may still work. */
 export const AUTH_ERROR_REFRESH_FAILED = "REFRESH_FAILED";
 
 export function getApiBaseUrl() {
   const configuredApiUrl = process.env.NEXT_PUBLIC_API_URL?.trim();
 
+  const isInsecureApiOrigin = configuredApiUrl?.startsWith("http:");
   if (typeof window !== "undefined") {
     if (configuredApiUrl) {
       const isSecurePage = window.location.protocol === "https:";
-      const isInsecureApiOrigin = configuredApiUrl.startsWith("http:");
 
       if (isSecurePage && isInsecureApiOrigin) {
         return "/api";
@@ -26,13 +24,14 @@ export function getApiBaseUrl() {
     return window.location.protocol === "https:" ? "/api" : DEFAULT_LOCAL_API_URL;
   }
 
-  return configuredApiUrl || DEFAULT_LOCAL_API_URL;
+
+  return isInsecureApiOrigin ? "/api" : configuredApiUrl;
 }
 
 export type RequestOptions = RequestInit & {
   token?: string;
-  /** Internal: set after one refresh retry to avoid loops. */
-  _authRetry?: boolean;
+  /** Internal: one retry after refresh (avoids loops). */
+  _didRefresh?: boolean;
 };
 
 export function getStoredToken() {
@@ -40,54 +39,50 @@ export function getStoredToken() {
   return localStorage.getItem("nb_token") || undefined;
 }
 
-export function getStoredRefreshToken() {
-  if (typeof window === "undefined") return undefined;
-  return localStorage.getItem(NB_REFRESH_TOKEN_KEY) || undefined;
-}
-
-type RefreshOutcome = "ok" | "auth_invalid" | "failed";
-
-let refreshInFlight: Promise<RefreshOutcome> | null = null;
-
-function shouldAttemptRefresh(path: string, authRetry?: boolean): boolean {
-  if (authRetry || typeof window === "undefined") return false;
-  if (!getStoredRefreshToken()) return false;
-  if (path === "/auth/refresh") return false;
-  if (path === "/auth/logout") return false;
-  if (path.startsWith("/auth/phone-otp")) return false;
-  return true;
-}
-
-function handleSessionExpired() {
+function clearStoredSession() {
   if (typeof window === "undefined") return;
   try {
     localStorage.removeItem("nb_token");
-    localStorage.removeItem(NB_REFRESH_TOKEN_KEY);
     localStorage.removeItem("nb_user");
   } catch {
     /* ignore */
   }
+}
+
+function redirectToLogout() {
+  if (typeof window === "undefined") return;
   window.location.assign("/logout");
 }
 
-async function refreshAccessToken(): Promise<RefreshOutcome> {
-  const rt = getStoredRefreshToken();
-  if (!rt) return "failed";
+function isBrowser() {
+  return typeof window !== "undefined";
+}
 
+function shouldRefreshOn401(path: string, didRefresh: boolean | undefined): boolean {
+  if (!isBrowser() || didRefresh) return false;
+  if (path === "/auth/refresh" || path === "/auth/logout") return false;
+  if (path.startsWith("/auth/phone-otp")) return false;
+  return true;
+}
+
+type RefreshOutcome = "ok" | "invalid" | "failed";
+
+let refreshPromise: Promise<RefreshOutcome> | null = null;
+
+/**
+ * POST /auth/refresh — backend reads the refresh token from the **HttpOnly cookie**
+ * (`Set-Cookie` on login). The browser only attaches it if this request uses
+ * `credentials: "include"` and the API URL is the cookie’s host (CORS must allow credentials).
+ */
+async function refreshAccessToken(): Promise<RefreshOutcome> {
   try {
     const res = await fetch(`${getApiBaseUrl()}/auth/refresh`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ refresh_token: rt }),
+      credentials: "include",
     });
 
     if (res.status === 401) {
-      try {
-        localStorage.removeItem(NB_REFRESH_TOKEN_KEY);
-      } catch {
-        /* ignore */
-      }
-      return "auth_invalid";
+      return "invalid";
     }
 
     if (!res.ok) return "failed";
@@ -95,9 +90,6 @@ async function refreshAccessToken(): Promise<RefreshOutcome> {
     const data = (await res.json()) as { access_token: string; refresh_token?: string };
     try {
       localStorage.setItem("nb_token", data.access_token);
-      if (data.refresh_token) {
-        localStorage.setItem(NB_REFRESH_TOKEN_KEY, data.refresh_token);
-      }
     } catch {
       /* ignore */
     }
@@ -111,41 +103,48 @@ async function refreshAccessToken(): Promise<RefreshOutcome> {
   }
 }
 
-async function performTokenRefresh(): Promise<RefreshOutcome> {
-  if (!refreshInFlight) {
-    refreshInFlight = refreshAccessToken().finally(() => {
-      refreshInFlight = null;
+function refreshOnce(): Promise<RefreshOutcome> {
+  if (!refreshPromise) {
+    refreshPromise = refreshAccessToken().finally(() => {
+      refreshPromise = null;
     });
   }
-  return refreshInFlight;
+  return refreshPromise;
 }
 
 export async function request<T>(path: string, options: RequestOptions = {}): Promise<T> {
-  const { token: explicitToken, _authRetry, ...init } = options;
+  const { token: explicitToken, _didRefresh, ...init } = options;
   const headers = new Headers(init.headers);
   if (!(init.body instanceof FormData)) {
     headers.set("Content-Type", "application/json");
   }
 
   const effectiveToken =
-    explicitToken !== undefined ? explicitToken : typeof window !== "undefined" ? getStoredToken() : undefined;
+    explicitToken !== undefined ? explicitToken : isBrowser() ? getStoredToken() : undefined;
 
   if (effectiveToken) {
     headers.set("Authorization", `Bearer ${effectiveToken}`);
   }
 
-  const response = await fetch(`${getApiBaseUrl()}${path}`, {
+  const url = `${getApiBaseUrl()}${path}`;
+  const credentials: RequestCredentials | undefined = isBrowser()
+    ? (init.credentials ?? "include")
+    : init.credentials;
+
+  const response = await fetch(url, {
     ...init,
     headers,
+    ...(credentials !== undefined ? { credentials } : {}),
   });
 
-  if (response.status === 401 && shouldAttemptRefresh(path, _authRetry)) {
-    const outcome = await performTokenRefresh();
+  if (response.status === 401 && shouldRefreshOn401(path, _didRefresh)) {
+    const outcome = await refreshOnce();
     if (outcome === "ok") {
-      return request<T>(path, { ...options, _authRetry: true });
+      return request<T>(path, { ...options, _didRefresh: true });
     }
-    if (outcome === "auth_invalid") {
-      handleSessionExpired();
+    if (outcome === "invalid") {
+      clearStoredSession();
+      redirectToLogout();
       throw new Error(AUTH_ERROR_SESSION_EXPIRED);
     }
     throw new Error(AUTH_ERROR_REFRESH_FAILED);

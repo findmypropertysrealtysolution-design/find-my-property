@@ -12,7 +12,7 @@ export default function LogoutPage() {
     if (!isAuthReady) return;
     void (async () => {
       await logout();
-      router.replace("/login");
+      router.push("/login");
     })();
   }, [isAuthReady, logout, router]);
 

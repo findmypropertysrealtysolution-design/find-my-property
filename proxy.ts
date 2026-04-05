@@ -4,6 +4,7 @@ import { FMP_ROLE_COOKIE, FMP_RT_COOKIE } from "@/lib/fmp-cookie";
 
 function hasReferenceToken(request: NextRequest): boolean {
   const v = request.cookies.get(FMP_RT_COOKIE)?.value;
+  console.log("v", v);
   return Boolean(v && v.trim().length > 0);
 }
 

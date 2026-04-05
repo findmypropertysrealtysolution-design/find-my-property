@@ -17,9 +17,9 @@ export default function DashboardHeader({ title }: DashboardHeaderProps) {
   const { user, logout } = useAuth();
   const router = useRouter();
 
-  const handleLogout = () => {
-    logout();
-    router.push("/");
+  const handleLogout = async () => {
+    await logout();
+    router.refresh();
   };
 
   return (

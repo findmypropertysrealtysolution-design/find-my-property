@@ -8,6 +8,7 @@ import { useAuth } from "@/contexts/auth-context";
 import { getNavItemsForRole, getDashboardTitleForRole } from "@/config/roleNav";
 import { UserRole } from "@/end-points/types";
 import { Spinner } from "../ui/spinner";
+import { useRouter } from "next/navigation";
 
 export default function RolesRoutesShell({
   role,
@@ -17,10 +18,13 @@ export default function RolesRoutesShell({
   children: ReactNode;
 }) {
   const { user, isAuthenticated, logout } = useAuth();
+  const router = useRouter();
 
   useLayoutEffect(() => {
     if (role != null && user && role !== user.role) {
-      logout();
+      logout().then(() => {
+        router.refresh();
+      });
     } 
   }, [role, user]);
 

@@ -51,8 +51,9 @@ const Navbar = () => {
                 variant="outline"
                 size="sm"
                 onClick={() => {
-                  logout();
-                  router.push("/");
+                   logout().then(() => {
+                    router.refresh();
+                   });
                 }}
               >
                 <LogOut className="w-3.5 h-3.5 mr-1" /> Logout
@@ -104,8 +105,9 @@ const Navbar = () => {
                       size="sm"
                       className="flex-1"
                       onClick={() => {
-                        logout();
-                        router.push("/");
+                        logout().then(() => {
+                          router.refresh();
+                        });
                         setMobileOpen(false);
                       }}
                     >
