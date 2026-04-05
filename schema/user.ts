@@ -24,6 +24,7 @@ export const userSchema = z.object({
   longitude: z.number().nullable(),
   onboardingCompleted: z.boolean(),
   role: userRoleSchema,
+  defaultRole: userRoleSchema.nullable().optional(),
   favorites: z.array(z.number().int()).nullable(),
   createdAt: z.coerce.date(),
   updatedAt: z.coerce.date(),

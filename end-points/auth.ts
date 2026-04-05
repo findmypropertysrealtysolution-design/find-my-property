@@ -8,6 +8,7 @@ interface BackendAuthUser {
   pendingEmail?: string | null;
   phone?: string | null;
   role?: string;
+  defaultRole?: string | null;
   isEmailVerified?: boolean;
   isPhoneVerified?: boolean;
   onboardingCompleted?: boolean;
@@ -42,6 +43,10 @@ function mapAuthUser(user: BackendAuthUser): AuthUser {
     pendingEmail: user.pendingEmail ?? null,
     phone: user.phone ?? null,
     role: normalizeRole(user.role),
+    defaultRole:
+      user.defaultRole != null && String(user.defaultRole).trim() !== ""
+        ? normalizeRole(user.defaultRole)
+        : null,
     isEmailVerified: Boolean(user.isEmailVerified),
     isPhoneVerified: Boolean(user.isPhoneVerified),
     onboardingCompleted: Boolean(user.onboardingCompleted),

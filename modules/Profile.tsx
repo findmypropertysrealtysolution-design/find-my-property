@@ -83,7 +83,7 @@ const Profile = () => {
               <p className="text-xs text-muted-foreground">Email cannot be changed here.</p>
             </div>
 
-            {user.role === "admin" && (
+            {user.defaultRole === "admin" && (
               <div className="space-y-2 p-4 bg-primary/5 rounded-xl border border-primary/20">
                 <Label className="flex items-center gap-2 text-primary font-semibold">
                   <Shield className="w-4 h-4" /> Super Admin Role Override
@@ -96,7 +96,7 @@ const Profile = () => {
                     const res = await updateProfile({ role: val });
                     if (res.success) {
                       toast({ title: "Role updated", description: `You are now a ${val}. Re-routing...` });
-                      window.location.href = `/${val}`;
+                      window.location.href = `/${val}/dashboard`;
                     } else {
                       toast({ title: "Failed", description: res.error || "Unknown error", variant: "destructive" });
                     }
