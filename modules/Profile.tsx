@@ -96,7 +96,7 @@ const Profile = () => {
                     const res = await updateProfile({ role: val });
                     if (res.success) {
                       toast({ title: "Role updated", description: `You are now a ${val}. Re-routing...` });
-                      window.location.href = `/${val}/dashboard`;
+                      window.location.href = `/dashboard`;
                     } else {
                       toast({ title: "Failed", description: res.error || "Unknown error", variant: "destructive" });
                     }
