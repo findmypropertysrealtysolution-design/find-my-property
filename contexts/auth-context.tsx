@@ -2,12 +2,7 @@
 
 import { createContext, useContext, useEffect, useState, ReactNode } from "react";
 import { api, type AuthUser, type UserRole } from "@/lib/api";
-import {
-  clearFmpRoleCookieClient,
-  clearFmpRtCookieClient,
-  setFmpRoleCookieClient,
-  setFmpRtCookieClient,
-} from "@/lib/fmp-cookie";
+import { clearFmpRoleCookieClient, setFmpRoleCookieClient } from "@/lib/fmp-cookie";
 import {
   AUTH_ERROR_REFRESH_FAILED,
   AUTH_ERROR_SESSION_EXPIRED,
@@ -112,31 +107,23 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     if (!isAuthReady) return;
     if (user && token) {
       setFmpRoleCookieClient(user.role);
-      setFmpRtCookieClient(token);
     } else {
       clearFmpRoleCookieClient();
-      clearFmpRtCookieClient();
     }
   }, [isAuthReady, user, token]);
 
-  const persistSession = (nextUser: User, accessToken: string, refreshToken?: string | null) => {
+  const persistSession = (nextUser: User, accessToken: string) => {
     setUser(nextUser);
     setToken(accessToken);
     localStorage.setItem("nb_user", JSON.stringify(nextUser));
     localStorage.setItem("nb_token", accessToken);
-    if (refreshToken) {
-      localStorage.setItem(NB_REFRESH_TOKEN_KEY, refreshToken);
-    }
     setFmpRoleCookieClient(nextUser.role);
-    setFmpRtCookieClient(accessToken);
   };
 
   const updateStoredUser = (nextUser: User) => {
     setUser(nextUser);
     localStorage.setItem("nb_user", JSON.stringify(nextUser));
     setFmpRoleCookieClient(nextUser.role);
-    const tok = localStorage.getItem("nb_token");
-    if (tok) setFmpRtCookieClient(tok);
   };
 
   const requestPhoneOtp = async (phone: string) => {
@@ -158,7 +145,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   ): Promise<AuthResult> => {
     try {
       const result = await api.verifyPhoneOtp({ phone, code, name });
-      persistSession(result.user, result.accessToken, result.refreshToken);
+      persistSession(result.user, result.accessToken);
       return { success: true, requiresOnboarding: !result.user.onboardingCompleted };
     } catch (error) {
       return {
@@ -222,7 +209,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const logout = async () => {
     clearFmpRoleCookieClient();
-    clearFmpRtCookieClient();
     setUser(null);
     setToken(null);
     localStorage.removeItem("nb_user");

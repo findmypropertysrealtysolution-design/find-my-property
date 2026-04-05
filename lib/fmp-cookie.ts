@@ -12,18 +12,7 @@ export function setFmpRoleCookieClient(role: string) {
   document.cookie = `${FMP_ROLE_COOKIE}=${encodeURIComponent(role)};path=/;max-age=${ONE_YEAR_S};SameSite=Lax`;
 }
 
-/** Client-side: persist reference token for edge/proxy (same value as `nb_token`). */
-export function setFmpRtCookieClient(token: string) {
-  if (typeof document === "undefined") return;
-  document.cookie = `${FMP_RT_COOKIE}=${encodeURIComponent(token)};path=/;max-age=${ONE_YEAR_S};SameSite=Lax`;
-}
-
 export function clearFmpRoleCookieClient() {
   if (typeof document === "undefined") return;
   document.cookie = `${FMP_ROLE_COOKIE}=;path=/;max-age=0`;
-}
-
-export function clearFmpRtCookieClient() {
-  if (typeof document === "undefined") return;
-  document.cookie = `${FMP_RT_COOKIE}=;path=/;max-age=0`;
 }
