@@ -1,5 +1,5 @@
-import TenantProfile from "@/modules/Profile";
+import Profile from "@/modules/Profile";
 
 export default function Page() {
-  return <TenantProfile />;
+  return <Profile />;
 }
