@@ -74,36 +74,6 @@ const DashboardSidebar = ({ items }: DashboardSidebarProps) => {
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
-
-      <SidebarFooter className="border-t border-border p-3">
-        {user && (
-          <div className="flex items-center gap-2 mb-2">
-            <Avatar className="h-8 w-8 shrink-0">
-              <AvatarFallback className="bg-primary/10 text-primary text-xs">
-                {user.name
-                  .split(" ")
-                  .map((n) => n[0])
-                  .join("")}
-              </AvatarFallback>
-            </Avatar>
-            {!collapsed && (
-              <div className="min-w-0">
-                <p className="text-sm font-medium text-foreground truncate">{user.name}</p>
-                <p className="text-xs text-muted-foreground capitalize">{user.role}</p>
-              </div>
-            )}
-          </div>
-        )}
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={logout}
-          className="w-full justify-start text-muted-foreground hover:text-destructive"
-        >
-          <LogOut className="h-4 w-4 mr-2" />
-          {!collapsed && "Logout"}
-        </Button>
-      </SidebarFooter>
     </Sidebar>
   );
 };
