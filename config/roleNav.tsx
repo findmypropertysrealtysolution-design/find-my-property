@@ -23,7 +23,7 @@ export interface NavItem {
 const tenantNav: NavItem[] = [
   { title: "Overview", url: "/dashboard", icon: LayoutDashboard },
   { title: "My Listings", url: "/listings", icon: Building2 },
-  { title: "Browse", url: "/", icon: Search },
+  { title: "Browse", url: "/browse", icon: Search },
   { title: "Favorites", url: "/favorites", icon: Heart },
   { title: "Alerts", url: "/alerts", icon: Bell },
   { title: "Profile", url: "/profile", icon: UserCircle },
@@ -32,7 +32,7 @@ const tenantNav: NavItem[] = [
 const agentNav: NavItem[] = [
   { title: "Overview", url: "/dashboard", icon: LayoutDashboard },
   { title: "My Listings", url: "/listings", icon: Building2 },
-  { title: "Browse", url: "/", icon: Search },
+  { title: "Browse", url: "/browse", icon: Search },
   { title: "Favorites", url: "/favorites", icon: Heart },
   { title: "Leads", url: "/leads", icon: Users },
   { title: "Reports", url: "/reports", icon: BarChart3 },
@@ -43,6 +43,7 @@ const adminNav: NavItem[] = [
   { title: "Overview", url: "/dashboard", icon: LayoutDashboard },
   { title: "Property Approval", url: "/approvals", icon: CheckSquare },
   { title: "Agent Management", url: "/agents", icon: Users },
+  { title: "Browse", url: "/browse", icon: Search },
   { title: "My Listings", url: "/listings", icon: Building2 },
   { title: "All properties", url: "/properties", icon: LayoutList },
   { title: "Favorites", url: "/favorites", icon: Heart },
