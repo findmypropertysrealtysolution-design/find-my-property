@@ -8,24 +8,7 @@ export const AUTH_ERROR_REFRESH_FAILED = "REFRESH_FAILED";
 
 export function getApiBaseUrl() {
   const configuredApiUrl = process.env.NEXT_PUBLIC_API_URL?.trim();
-
-  const isInsecureApiOrigin = configuredApiUrl?.startsWith("http:");
-  if (typeof window !== "undefined") {
-    if (configuredApiUrl) {
-      const isSecurePage = window.location.protocol === "https:";
-
-      if (isSecurePage && isInsecureApiOrigin) {
-        return "/api";
-      }
-
-      return configuredApiUrl;
-    }
-
-    return window.location.protocol === "https:" ? "/api" : DEFAULT_LOCAL_API_URL;
-  }
-
-
-  return isInsecureApiOrigin ? "/api" : (configuredApiUrl ?? DEFAULT_LOCAL_API_URL);
+    return configuredApiUrl ?? DEFAULT_LOCAL_API_URL;
 }
 
 export type RequestOptions = RequestInit & {
