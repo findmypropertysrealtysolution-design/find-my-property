@@ -7,6 +7,13 @@
     "dev": "next dev --turbopack",
     "build": "next build",
     "start": "next start",
+    "pm2:start": "pm2 start ecosystem.config.cjs",
+    "pm2:stop": "pm2 stop find-my-property",
+    "pm2:restart": "pm2 restart find-my-property",
+    "pm2:reload": "pm2 reload ecosystem.config.cjs",
+    "pm2:delete": "pm2 delete find-my-property",
+    "pm2:logs": "pm2 logs find-my-property",
+    "pm2:status": "pm2 status",
     "lint": "eslint",
     "format": "prettier --write \"**/*.{ts,tsx}\"",
     "typecheck": "tsc --noEmit"
@@ -82,6 +89,7 @@
     "eslint-config-next": "16.2.1",
     "postcss": "^8",
     "prettier": "^3.8.1",
+    "pm2": "^6.0.14",
     "prettier-plugin-tailwindcss": "^0.7.2",
     "tailwindcss": "^4.2.1",
     "typescript": "^5.9.3"
