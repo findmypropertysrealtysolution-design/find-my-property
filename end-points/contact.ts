@@ -5,6 +5,8 @@ export type ContactFormPayload = {
   email: string;
   message: string;
   subject: string;
+  /** reCAPTCHA v2 response token for server-side verification */
+  recaptchaToken: string;
 };
 
 export const contact = {

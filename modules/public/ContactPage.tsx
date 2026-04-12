@@ -1,9 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import type { ElementRef } from "react";
+import { useRef, useState } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { ArrowLeft, Mail, MapPin, Phone, Send } from "lucide-react";
+import ReCAPTCHA from "react-google-recaptcha";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -14,8 +16,14 @@ import { api } from "@/lib/api";
 
 const SUPPORT_PHONE = "+91 98765 43210";
 
+const RECAPTCHA_SITE_KEY =
+  process.env.NEXT_PUBLIC_GOOGLE_RECAPTCHA_SITE_KEY?.trim() ||
+  process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY?.trim() ||
+  "";
+
 export default function ContactPage() {
   const { toast } = useToast();
+  const recaptchaRef = useRef<ElementRef<typeof ReCAPTCHA>>(null);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [subject, setSubject] = useState("");
@@ -38,6 +46,25 @@ export default function ContactPage() {
       return;
     }
 
+    if (!RECAPTCHA_SITE_KEY) {
+      toast({
+        title: "reCAPTCHA not configured",
+        description: "Set NEXT_PUBLIC_GOOGLE_RECAPTCHA_SITE_KEY (or NEXT_PUBLIC_RECAPTCHA_SITE_KEY) in your environment.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const recaptchaToken = recaptchaRef.current?.getValue();
+    if (!recaptchaToken) {
+      toast({
+        title: "Complete the verification",
+        description: "Please check the “I’m not a robot” box.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setSubmitting(true);
     try {
       await api.contact.submit({
@@ -45,6 +72,7 @@ export default function ContactPage() {
         email: trimmedEmail,
         message: trimmedMessage,
         subject: trimmedSubject || "Contact form",
+        recaptchaToken,
       });
       toast({
         title: "Message sent",
@@ -54,6 +82,7 @@ export default function ContactPage() {
       setEmail("");
       setSubject("");
       setMessage("");
+      recaptchaRef.current?.reset();
     } catch (err) {
       toast({
         title: "Couldn’t send message",
@@ -191,12 +220,46 @@ export default function ContactPage() {
                     className="resize-y min-h-[140px]"
                   />
                 </div>
-                <Button type="submit" size="lg" className="w-full sm:w-auto" disabled={submitting}>
+                {RECAPTCHA_SITE_KEY ? (
+                  <div className="flex justify-center sm:justify-start">
+                    <ReCAPTCHA ref={recaptchaRef} sitekey={RECAPTCHA_SITE_KEY} theme="light" />
+                  </div>
+                ) : (
+                  <p className="text-sm text-destructive">
+                    Contact form is missing{" "}
+                    <code className="rounded bg-muted px-1 py-0.5 text-xs">NEXT_PUBLIC_GOOGLE_RECAPTCHA_SITE_KEY</code>.
+                  </p>
+                )}
+                <Button
+                  type="submit"
+                  size="lg"
+                  className="w-full sm:w-auto"
+                  disabled={submitting || !RECAPTCHA_SITE_KEY}
+                >
                   <Send className="mr-2 h-4 w-4" />
                   {submitting ? "Sending…" : "Send message"}
                 </Button>
                 <p className="text-xs text-muted-foreground">
-                  Your message is sent securely to our team. You can still reach us directly at {SUPPORT_EMAIL}.
+                  Your message is sent securely to our team. You can still reach us directly at {SUPPORT_EMAIL}. This site
+                  is protected by reCAPTCHA and the Google{" "}
+                  <a
+                    href="https://policies.google.com/privacy"
+                    className="underline underline-offset-2 hover:text-foreground"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    Privacy Policy
+                  </a>{" "}
+                  and{" "}
+                  <a
+                    href="https://policies.google.com/terms"
+                    className="underline underline-offset-2 hover:text-foreground"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    Terms of Service
+                  </a>{" "}
+                  apply.
                 </p>
               </div>
             </form>
