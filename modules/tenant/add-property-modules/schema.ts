@@ -4,14 +4,20 @@ import type { BackendProperty } from "@/lib/property-mapper";
 const propertyTypeOptions = ["Apartment", "House", "Villa", "Townhome"] as const;
 const listingTypeOptions = ["Rent", "Sale", "Lease"] as const;
 
+const furnishingOptions = ["furnished", "semi-furnished", "unfurnished"] as const;
+
 type PropertyTypeOption = (typeof propertyTypeOptions)[number];
 type ListingTypeOption = (typeof listingTypeOptions)[number];
+type FurnishingOption = (typeof furnishingOptions)[number];
 
 const isPropertyTypeOption = (value: string): value is PropertyTypeOption =>
   propertyTypeOptions.includes(value as PropertyTypeOption);
 
 const isListingTypeOption = (value: string): value is ListingTypeOption =>
   listingTypeOptions.includes(value as ListingTypeOption);
+
+const isFurnishingOption = (value: string): value is FurnishingOption =>
+  (furnishingOptions as readonly string[]).includes(value);
 
 export const propertyFormSchema = z.object({
   propertyType: z.enum(propertyTypeOptions, {
@@ -27,6 +33,10 @@ export const propertyFormSchema = z.object({
   area: z.string().min(1, "Area is required."),
   yearBuilt: z.coerce.number().min(1900, "Year must be 1900 or later.").max(new Date().getFullYear() + 5, "Year cannot be too far in the future."),
   price: z.coerce.number().min(1, "Price must be greater than 0."),
+
+  furnishing: z.enum(furnishingOptions, {
+    required_error: "Please select furnishing status.",
+  }),
 
   address: z.string().min(5, "Address must be at least 5 characters."),
   locality: z.string().min(2, "Locality is required."),
@@ -56,6 +66,10 @@ export const propertyFormSchema = z.object({
 
   /** Set by admins only in the UI; optional on create/update */
   assignedAgentId: z.string().optional(),
+
+  /** Map pin — saved with listing for browse map markers */
+  latitude: z.number().optional(),
+  longitude: z.number().optional(),
 });
 
 export type PropertyFormValues = z.infer<typeof propertyFormSchema>;
@@ -111,6 +125,10 @@ export const getDefaultValues = (initialData?: BackendProperty): Partial<Propert
     area: areaSqFt != null ? String(areaSqFt) : "",
     yearBuilt: initialData?.yearBuilt ?? new Date().getFullYear(),
     price: initialData?.price ?? 0,
+    furnishing:
+      initialData?.furnishing != null && isFurnishingOption(initialData.furnishing)
+        ? initialData.furnishing
+        : "unfurnished",
     address: initialData?.address || "",
     locality: initialData?.locality || "",
     city: initialData?.city || "",
@@ -126,5 +144,13 @@ export const getDefaultValues = (initialData?: BackendProperty): Partial<Propert
       initialData?.assignedAgentId != null && initialData.assignedAgentId > 0
         ? String(initialData.assignedAgentId)
         : "",
+    latitude:
+      initialData?.latitude != null && Number.isFinite(Number(initialData.latitude))
+        ? Number(initialData.latitude)
+        : undefined,
+    longitude:
+      initialData?.longitude != null && Number.isFinite(Number(initialData.longitude))
+        ? Number(initialData.longitude)
+        : undefined,
   };
 };

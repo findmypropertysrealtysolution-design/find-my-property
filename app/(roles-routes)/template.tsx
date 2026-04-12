@@ -6,9 +6,11 @@ import { RequireAuth, RequireCompletedProfile } from "@/components/auth/route-gu
 
 export default function RolesRoutesTemplate({ children }: { children: ReactNode }) {
   const pathname = usePathname();
-  const isPublicProperty = pathname.startsWith("/property/");
+  /** SEO/marketing URLs: guests can view; authed users get dashboard shell (sidebar) in `RolesRoutesShell`. */
+  const isPublicMarketplace =
+    pathname === "/browse" || pathname.startsWith("/property/");
 
-  if (isPublicProperty) {
+  if (isPublicMarketplace) {
     return <div className="min-h-0">{children}</div>;
   }
 

@@ -4,4 +4,4 @@ export const SITE_NAME = "Find My Property";
 export const SUPPORT_EMAIL =
   typeof process !== "undefined" && process.env.NEXT_PUBLIC_SUPPORT_EMAIL?.trim()
     ? process.env.NEXT_PUBLIC_SUPPORT_EMAIL.trim()
-    : "hello@findmyproperty.com";
+    : "findmypropertysrealtysolution@gmail.com";

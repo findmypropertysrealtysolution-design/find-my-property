@@ -1,9 +1,10 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
+import { InputOTP, InputOTPGroup, InputOTPSeparator, InputOTPSlot } from "@/components/ui/input-otp";
 import { Input } from "@/components/ui/input";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Building2, Smartphone } from "lucide-react";
 import { motion } from "framer-motion";
 import { useState } from "react";
@@ -11,7 +12,7 @@ import { useAuth, User } from "@/contexts/auth-context";
 import { useToast } from "@/hooks/use-toast";
 import Image from "next/image";
 import { SITE_NAME } from "@/lib/branding";
-import { getPostAuthRoute } from "@/lib/auth-redirect";
+import { buildLoginAndRegisterHrefs, getPostAuthRoute, parseSafeReturnPath } from "@/lib/auth-redirect";
 
 const normalizePhone = (value: string) => {
   const trimmed = value.trim();
@@ -29,6 +30,9 @@ const Login = () => {
   const [verifyingOtp, setVerifyingOtp] = useState(false);
   const { loginWithPhone, requestPhoneOtp } = useAuth();
   const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const { registerHref } = buildLoginAndRegisterHrefs(pathname, searchParams);
   const { toast } = useToast();
 
   const handleSendOtp = async (e?: React.SubmitEvent<HTMLFormElement>) => {
@@ -91,10 +95,7 @@ const handleVerifyOtp = async (e?: React.SubmitEvent<HTMLFormElement>) => {
 
     const nextUser = JSON.parse(localStorage.getItem("nb_user") || "null") as User | null;
     const from = new URLSearchParams(window.location.search).get("from");
-    const safeFrom =
-      from && from.startsWith("/") && from !== "/login" && from !== "/register"
-        ? from
-        : null;
+    const safeFrom = parseSafeReturnPath(from);
     router.replace(safeFrom || getPostAuthRoute(nextUser));
   };
 
@@ -175,14 +176,21 @@ const handleVerifyOtp = async (e?: React.SubmitEvent<HTMLFormElement>) => {
                   <label className="text-sm font-medium leading-none text-foreground ml-1">
                     One-Time Password
                   </label>
-                  <Input
-                    placeholder="Enter 6-digit OTP"
-                    value={otp}
-                    onChange={(e) => setOtp(e.target.value)}
-                    className="h-12 w-full rounded-xl bg-background border-input shadow-sm focus-visible:ring-1 focus-visible:ring-primary text-center tracking-[0.5em] text-lg font-medium transition-all"
-                    maxLength={10}
-                    required
-                  />
+                  <div className="flex justify-center pt-1">
+                    <InputOTP maxLength={6} value={otp} onChange={setOtp} disabled={verifyingOtp}>
+                      <InputOTPGroup>
+                        <InputOTPSlot index={0} />
+                        <InputOTPSlot index={1} />
+                        <InputOTPSlot index={2} />
+                      </InputOTPGroup>
+                      <InputOTPSeparator />
+                      <InputOTPGroup>
+                        <InputOTPSlot index={3} />
+                        <InputOTPSlot index={4} />
+                        <InputOTPSlot index={5} />
+                      </InputOTPGroup>
+                    </InputOTP>
+                  </div>
                 </motion.div>
               )}
             </div>
@@ -220,7 +228,7 @@ const handleVerifyOtp = async (e?: React.SubmitEvent<HTMLFormElement>) => {
 
           <div className="mt-8 text-center text-sm">
             <span className="text-muted-foreground">New to {SITE_NAME}? </span>
-            <Link href="/register" className="text-primary font-semibold hover:underline transition-all">
+            <Link href={registerHref} className="text-primary font-semibold hover:underline transition-all">
               Create an account
             </Link>
           </div>

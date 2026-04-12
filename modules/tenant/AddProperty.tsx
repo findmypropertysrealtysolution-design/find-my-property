@@ -2,6 +2,9 @@
 
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useQueryClient } from "@tanstack/react-query";
+import { revalidatePropertyListingCache } from "@/lib/server/revalidate-property-cache";
+import { invalidatePropertyQueries } from "@/lib/invalidate-property-queries";
 import { motion } from "framer-motion";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -43,6 +46,7 @@ const BASE_SECTIONS = [
 
 const AddProperty = ({ initialData }: { initialData?: BackendProperty }) => {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const { toast } = useToast();
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
@@ -91,6 +95,7 @@ const AddProperty = ({ initialData }: { initialData?: BackendProperty }) => {
         bathrooms: Number(data.bathrooms),
         area: Number((Number(data.area) / 10.7639).toFixed(2)),
         yearBuilt: data.yearBuilt,
+        furnishing: data.furnishing,
         amenities: data.amenities,
         propertyImages: allImageUrls,
         thumbnailUrl: data.thumbnailUrl || allImageUrls[0] || "",
@@ -105,15 +110,29 @@ const AddProperty = ({ initialData }: { initialData?: BackendProperty }) => {
         }
       }
 
+      if (
+        data.latitude != null &&
+        data.longitude != null &&
+        Number.isFinite(data.latitude) &&
+        Number.isFinite(data.longitude)
+      ) {
+        payload.latitude = data.latitude;
+        payload.longitude = data.longitude;
+      }
+
+      let propertyIdForCache: string | undefined;
+
       if (initialData?.id) {
         await api.updateProperty(String(initialData.id), payload);
+        propertyIdForCache = String(initialData.id);
         toast({
           variant: "success",
           title: "Property updated",
           description: "Your listing has been saved successfully.",
         });
       } else {
-        await api.createProperty(payload);
+        const created = await api.createProperty(payload);
+        propertyIdForCache = String(created.id);
         toast({
           variant: "success",
           title: "Property submitted",
@@ -121,6 +140,9 @@ const AddProperty = ({ initialData }: { initialData?: BackendProperty }) => {
         });
       }
 
+      await revalidatePropertyListingCache(propertyIdForCache);
+      await invalidatePropertyQueries(queryClient, propertyIdForCache);
+      router.refresh();
       router.push("/listings");
     } catch (error) {
       toast({

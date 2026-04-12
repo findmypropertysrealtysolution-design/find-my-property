@@ -6,14 +6,12 @@ import PropertyCard from "@/components/property/PropertyCard";
 import { PropertyCardSkeleton } from "@/components/skeletons/property-card-skeleton";
 import { useProperties } from "@/hooks/use-properties";
 import { motion } from "framer-motion";
-import { Heart, Bell, Clock, Search, Shield, Headphones } from "lucide-react";
+import { Clock, Search, Shield, Headphones } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 
 const perks = [
   { icon: Shield, title: "Verified Properties", desc: "All listings verified by our team" },
-  { icon: Heart, title: "Saved Favorites", desc: "Shortlist and compare properties" },
-  { icon: Bell, title: "Instant Alerts", desc: "Get notified when new properties match" },
   { icon: Headphones, title: "24/7 Support", desc: "We're here to help you move" },
 ];
 
@@ -35,14 +33,14 @@ const TenantDashboard = () => {
               Browse verified properties with clear details and direct contact options.
             </p>
             <Button size="lg" className="mt-6" asChild>
-              <Link href="/properties">
-                <Search className="w-4 h-4 mr-2" /> Browse All Properties
+              <Link href="/browse">
+                <Search className="w-4 h-4 mr-2" /> Browse all listings
               </Link>
             </Button>
           </div>
 
           {/* Perks */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-16">
+          <div className="grid grid-cols-2 md:grid-cols-2 gap-4 mb-16 max-w-2xl mx-auto">
             {perks.map((perk, i) => (
               <motion.div
                 key={perk.title}

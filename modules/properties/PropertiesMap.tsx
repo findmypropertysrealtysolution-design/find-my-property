@@ -1,14 +1,14 @@
 "use client";
 
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { GoogleMap, useJsApiLoader, Marker } from "@react-google-maps/api";
 import { Button } from "@/components/ui/button";
 import { ZoomIn, ZoomOut, Maximize2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { getGoogleMapsLoaderOptions } from "@/lib/google-maps-loader";
+import { getMarkerPosition, MAP_DEFAULT_CENTER } from "@/lib/property-map-coords";
 import type { Property } from "@/components/property/PropertyCard";
 
-const DEFAULT_CENTER = { lat: 12.9716, lng: 77.5946 };
 const DEFAULT_ZOOM = 11;
 
 const containerStyle: React.CSSProperties = {
@@ -45,13 +45,24 @@ const PropertiesMap = ({
     mapRef.current = null;
   }, []);
 
+  const positions = properties.map((p) => ({ property: p, ...getMarkerPosition(p) }));
+  const approximateCount = positions.filter((x) => x.approximate).length;
+
   const fitAllProperties = useCallback(() => {
-    const withCoords = properties.filter((p) => p.lat != null && p.lng != null);
-    if (withCoords.length === 0 || !mapRef.current) return;
+    if (positions.length === 0 || !mapRef.current) return;
     const bounds = new google.maps.LatLngBounds();
-    withCoords.forEach((p) => bounds.extend({ lat: p.lat!, lng: p.lng! }));
+    positions.forEach((p) => bounds.extend({ lat: p.lat, lng: p.lng }));
     mapRef.current.fitBounds(bounds, { top: 40, right: 40, bottom: 40, left: 40 });
-  }, [properties]);
+  }, [positions]);
+
+  const didAutoFit = useRef(false);
+  /** Once when the map loads with markers, zoom to fit (manual "Fit all" still works). */
+  useEffect(() => {
+    if (!isLoaded || positions.length === 0 || didAutoFit.current) return;
+    didAutoFit.current = true;
+    const t = window.setTimeout(() => fitAllProperties(), 150);
+    return () => window.clearTimeout(t);
+  }, [isLoaded, positions.length, fitAllProperties]);
 
   const zoomIn = useCallback(() => {
     if (mapRef.current) {
@@ -111,32 +122,49 @@ const PropertiesMap = ({
     );
   }
 
-  const withCoords = properties.filter((p) => p.lat != null && p.lng != null);
+  console.log({positions})
 
   return (
     <div className={cn("space-y-3", className)}>
-      <div className="flex items-center justify-between gap-2 flex-wrap">
+      {approximateCount > 0 && (
+        <p className="rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-900 dark:text-amber-100">
+          {approximateCount} listing{approximateCount === 1 ? "" : "s"} use an approximate position (no saved map coordinates). Add a map pin when listing a property for exact placement.
+        </p>
+      )}
+      <div className="flex flex-wrap items-center justify-between gap-2">
         <span className="text-sm text-muted-foreground">
-          Zoom: {zoom} | {withCoords.length} propert{withCoords.length === 1 ? "y" : "ies"}
+          Zoom: {zoom} | {positions.length} propert{positions.length === 1 ? "y" : "ies"} on map
         </span>
         <div className="flex items-center gap-2">
-          <Button type="button" variant="outline" size="sm" onClick={fitAllProperties}>
-            <Maximize2 className="w-4 h-4 mr-1" /> Fit All Properties
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={fitAllProperties}
+            disabled={positions.length === 0}
+          >
+            <Maximize2 className="mr-1 h-4 w-4" /> Fit all
           </Button>
-          <div className="flex border border-border rounded-lg overflow-hidden">
+          <div className="flex overflow-hidden rounded-lg border border-border">
             <Button type="button" variant="ghost" size="icon" className="rounded-none" onClick={zoomIn}>
-              <ZoomIn className="w-4 h-4" />
+              <ZoomIn className="h-4 w-4" />
             </Button>
-            <Button type="button" variant="ghost" size="icon" className="rounded-none border-l border-border" onClick={zoomOut}>
-              <ZoomOut className="w-4 h-4" />
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              className="rounded-none border-l border-border"
+              onClick={zoomOut}
+            >
+              <ZoomOut className="h-4 w-4" />
             </Button>
           </div>
         </div>
       </div>
-      <div className="relative rounded-xl overflow-hidden border border-border" style={{ height }}>
+      <div className="relative overflow-hidden rounded-xl border border-border" style={{ height }}>
         <GoogleMap
           mapContainerStyle={{ ...containerStyle, height, minHeight: height }}
-          center={DEFAULT_CENTER}
+          center={MAP_DEFAULT_CENTER}
           zoom={DEFAULT_ZOOM}
           onLoad={onLoad}
           onUnmount={onUnmount}
@@ -147,7 +175,7 @@ const PropertiesMap = ({
             zoomControl: false,
           }}
         >
-          {withCoords.map((p) => {
+          {positions.map(({ property: p, lat, lng, approximate }) => {
             const label =
               p.priceValue >= 10000000
                 ? `₹${(p.priceValue / 10000000).toFixed(1)}Cr`
@@ -157,16 +185,17 @@ const PropertiesMap = ({
             return (
               <Marker
                 key={p.id}
-                position={{ lat: p.lat!, lng: p.lng! }}
+                position={{ lat, lng }}
                 label={{
                   text: label.length > 8 ? label.slice(0, 7) + "…" : label,
                   color: "#fff",
                   fontSize: "11px",
                   fontWeight: "bold",
                 }}
-                title={p.title}
+                title={approximate ? `${p.title} (approximate)` : p.title}
                 onClick={() => onPropertyClick?.(p)}
                 cursor="pointer"
+                opacity={approximate ? 0.92 : 1}
               />
             );
           })}

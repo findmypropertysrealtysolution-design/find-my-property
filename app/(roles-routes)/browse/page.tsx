@@ -1,5 +1,36 @@
+import type { Metadata } from "next";
 import Properties from "@/modules/properties/Properties";
+import { JsonLd } from "@/components/seo/json-ld";
+import { buildBrowseCollectionJsonLd } from "@/lib/seo/jsonld";
+import { SITE_NAME } from "@/lib/branding";
+import { absoluteUrl } from "@/lib/seo/site";
+
+const BROWSE_TITLE = "Browse verified listings";
+const BROWSE_DESCRIPTION =
+  "Filter homes for rent or sale by city, locality, budget, BHK, furnishing, and more. Switch between map and list views on Find My Property.";
+
+export const metadata: Metadata = {
+  title: BROWSE_TITLE,
+  description: BROWSE_DESCRIPTION,
+  alternates: { canonical: "/browse" },
+  openGraph: {
+    url: absoluteUrl("/browse"),
+    title: `${BROWSE_TITLE} | ${SITE_NAME}`,
+    description: BROWSE_DESCRIPTION,
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: `${BROWSE_TITLE} | ${SITE_NAME}`,
+    description: BROWSE_DESCRIPTION,
+  },
+};
 
 export default function BrowsePage() {
-  return <Properties />;
+  return (
+    <>
+      <JsonLd data={buildBrowseCollectionJsonLd()} />
+      <Properties />
+    </>
+  );
 }

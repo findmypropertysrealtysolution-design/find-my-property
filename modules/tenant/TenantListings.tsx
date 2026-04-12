@@ -6,13 +6,19 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
 import { ListingGridSkeleton } from "@/components/skeletons/listing-row-skeleton";
+import { useQueryClient } from "@tanstack/react-query";
+import { useRouter } from "next/navigation";
 import { useMyProperties } from "@/hooks/use-properties";
 import { api } from "@/lib/api";
+import { invalidatePropertyQueries } from "@/lib/invalidate-property-queries";
+import { revalidatePropertyListingCache } from "@/lib/server/revalidate-property-cache";
 import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
 import { PropertyStatus } from "@/lib/property-mapper";
 
 const TenantListings = () => {
+  const router = useRouter();
+  const queryClient = useQueryClient();
   const { data, refetch, isLoading } = useMyProperties();
   const { toast } = useToast();
   const [deletingId, setDeletingId] = useState<string | null>(null);
@@ -24,6 +30,9 @@ const TenantListings = () => {
     try {
       setDeletingId(id);
       await api.deleteProperty(id);
+      await revalidatePropertyListingCache(id);
+      await invalidatePropertyQueries(queryClient, id);
+      router.refresh();
       toast({
         variant: "success",
         title: "Listing removed",

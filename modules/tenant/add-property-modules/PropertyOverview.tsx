@@ -1,5 +1,5 @@
 import { useFormContext } from "react-hook-form";
-import { Bed, Bath, Square, Calendar, IndianRupee } from "lucide-react";
+import { Bed, Bath, Square, Calendar, IndianRupee, Sofa } from "lucide-react";
 import {
   FormControl,
   FormField,
@@ -106,6 +106,30 @@ export const PropertyOverview = () => {
           )}
         />
       </div>
+      <FormField
+        control={control}
+        name="furnishing"
+        render={({ field }) => (
+          <FormItem className="max-w-md">
+            <FormLabel required className="flex items-center gap-1.5 text-muted-foreground">
+              <Sofa className="h-3.5 w-3.5" /> Furnishing
+            </FormLabel>
+            <Select onValueChange={field.onChange} value={field.value}>
+              <FormControl>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select furnishing" />
+                </SelectTrigger>
+              </FormControl>
+              <SelectContent>
+                <SelectItem value="unfurnished">Unfurnished</SelectItem>
+                <SelectItem value="semi-furnished">Semi-furnished</SelectItem>
+                <SelectItem value="furnished">Furnished</SelectItem>
+              </SelectContent>
+            </Select>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
       <FormField
         control={control}
         name="price"

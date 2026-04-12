@@ -39,7 +39,6 @@ const PropertyDetail = () => {
 
   const [activeFloorIndex, setActiveFloorIndex] = useState(0);
   const [mainImageIndex, setMainImageIndex] = useState(0);
-  const [isFavorited, setIsFavorited] = useState(false);
   const [enquiryOpen, setEnquiryOpen] = useState(false);
   const [enquiryMessage, setEnquiryMessage] = useState("");
 
@@ -47,7 +46,7 @@ const PropertyDetail = () => {
     setActiveFloorIndex(0);
   }, [property?.id]);
 
-  const loginHref = `/login?from=${encodeURIComponent(pathname || (id ? `/property/${params.slug}` : "/properties"))}`;
+  const loginHref = `/login?from=${encodeURIComponent(pathname || (id ? `/property/${params.slug}` : "/browse"))}`;
   const canEnquireAsTenant = isAuthReady && user?.role === "tenant";
 
   if (isLoading && !property) {
@@ -76,8 +75,6 @@ const PropertyDetail = () => {
         images={images}
         mainImageIndex={mainImageIndex}
         onMainImageChange={setMainImageIndex}
-        isFavorited={isFavorited}
-        onFavoriteToggle={() => setIsFavorited((f) => !f)}
       />
 
       <div className="container mx-auto mt-8">

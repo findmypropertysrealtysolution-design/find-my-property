@@ -3,13 +3,13 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Building2, Smartphone, User as UserIcon } from "lucide-react";
 import { motion } from "framer-motion";
 import { useState } from "react";
 import { useAuth, type User } from "@/contexts/auth-context";
 import { useToast } from "@/hooks/use-toast";
-import { getPostAuthRoute } from "@/lib/auth-redirect";
+import { buildLoginAndRegisterHrefs, getPostAuthRoute, parseSafeReturnPath } from "@/lib/auth-redirect";
 import { SITE_NAME } from "@/lib/branding";
 
 const normalizePhone = (value: string) => {
@@ -29,6 +29,9 @@ const Register = () => {
   const [verifyingOtp, setVerifyingOtp] = useState(false);
   const { loginWithPhone, requestPhoneOtp } = useAuth();
   const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const { loginHref } = buildLoginAndRegisterHrefs(pathname, searchParams);
   const { toast } = useToast();
 
   const handleSendOtp = async () => {
@@ -87,10 +90,7 @@ const Register = () => {
 
     const nextUser = JSON.parse(localStorage.getItem("nb_user") || "null") as User | null;
     const from = new URLSearchParams(window.location.search).get("from");
-    const safeFrom =
-      from && from.startsWith("/") && from !== "/login" && from !== "/register"
-        ? from
-        : null;
+    const safeFrom = parseSafeReturnPath(from);
     router.replace(safeFrom || getPostAuthRoute(nextUser));
   };
 
@@ -225,7 +225,7 @@ const Register = () => {
 
           <div className="mt-8 text-center text-sm">
             <span className="text-muted-foreground">Already have an account? </span>
-            <Link href="/login" className="text-primary font-semibold hover:underline transition-all">
+            <Link href={loginHref} className="text-primary font-semibold hover:underline transition-all">
               Log in instead
             </Link>
           </div>

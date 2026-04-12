@@ -1,5 +1,6 @@
-import TenantFavorites from "@/modules/tenant/TenantFavorites";
+import { redirect } from "next/navigation";
 
+/** Favorites feature hidden — keep route from 404 for old links. */
 export default function Page() {
-  return <TenantFavorites />;
+  redirect("/dashboard");
 }

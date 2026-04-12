@@ -105,6 +105,9 @@ export const auth = {
     email?: string;
     name?: string;
     role?: UserRole;
+    phone?: string;
+    /** OTP sent to `phone` via `requestPhoneOtp` — required when updating phone while logged in. */
+    otp?: string;
     locationAddress?: string;
     locationCity?: string;
     locationState?: string;

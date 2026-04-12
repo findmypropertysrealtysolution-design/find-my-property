@@ -25,7 +25,7 @@ export function getApiBaseUrl() {
   }
 
 
-  return isInsecureApiOrigin ? "/api" : configuredApiUrl;
+  return isInsecureApiOrigin ? "/api" : (configuredApiUrl ?? DEFAULT_LOCAL_API_URL);
 }
 
 export type RequestOptions = RequestInit & {

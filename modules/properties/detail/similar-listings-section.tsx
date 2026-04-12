@@ -20,8 +20,8 @@ export function SimilarListingsSection({ properties }: SimilarListingsSectionPro
     >
       <div className="mb-6 flex items-center justify-between">
         <h2 className="font-heading text-xl font-semibold text-foreground">Similar Listings</h2>
-        <Link href="/properties" className="text-sm text-muted-foreground transition-colors hover:text-foreground">
-          See all listing
+        <Link href="/browse" className="text-sm text-muted-foreground transition-colors hover:text-foreground">
+          See all listings
         </Link>
       </div>
       {properties.length > 0 ? (

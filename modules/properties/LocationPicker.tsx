@@ -1,10 +1,10 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { GoogleMap, useJsApiLoader, Marker } from "@react-google-maps/api";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { MapPin, Link2, Search } from "lucide-react";
+import { MapPin, Link2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { getGoogleMapsLoaderOptions } from "@/lib/google-maps-loader";
 
@@ -15,7 +15,7 @@ export interface LocationValue {
   lng: number;
 }
 
-/** Parsed address from Geocoding API or Places API */
+/** Parsed address from Geocoding API */
 export interface AddressComponents {
   address?: string;
   locality?: string;
@@ -24,7 +24,7 @@ export interface AddressComponents {
   country?: string;
 }
 
-/** Parse address_components from Geocoder result or Place */
+/** Parse address_components from Geocoder result */
 function parseAddressComponents(components: google.maps.GeocoderAddressComponent[]): AddressComponents {
   const get = (type: string) =>
     components.find((c) => c.types.includes(type))?.long_name ?? "";
@@ -73,13 +73,11 @@ const containerStyle: React.CSSProperties = {
 export interface LocationPickerProps {
   value: LocationValue | null;
   onChange: (value: LocationValue | null) => void;
-  /** When location is set via map/link or place selected, optional callback with parsed address */
+  /** When location is set via map or link, optional callback with parsed address */
   onAddressChange?: (address: AddressComponents | null) => void;
   className?: string;
   height?: number;
   showLinkInput?: boolean;
-  /** Show "Search address or place" input (Places Autocomplete) */
-  showSearchInput?: boolean;
 }
 
 const LocationPicker = ({
@@ -89,12 +87,9 @@ const LocationPicker = ({
   className,
   height = 320,
   showLinkInput = true,
-  showSearchInput = true,
 }: LocationPickerProps) => {
   const [linkInput, setLinkInput] = useState("");
   const [linkError, setLinkError] = useState(false);
-  const searchInputRef = useRef<HTMLInputElement>(null);
-  const autocompleteRef = useRef<google.maps.places.Autocomplete | null>(null);
 
   const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAP_KEY ?? "";
   const { isLoaded, loadError } = useJsApiLoader(getGoogleMapsLoaderOptions(apiKey));
@@ -150,31 +145,6 @@ const LocationPicker = ({
     }
   }, [linkInput, setLocationAndGeocode]);
 
-  // Init Places Autocomplete when script is loaded
-  useEffect(() => {
-    if (!isLoaded || !showSearchInput || !searchInputRef.current || !window.google?.maps?.places) return;
-    const input = searchInputRef.current;
-    autocompleteRef.current = new google.maps.places.Autocomplete(input, {
-      fields: ["geometry", "address_components", "formatted_address"],
-      types: ["address"],
-    });
-    const listener = autocompleteRef.current.addListener("place_changed", () => {
-      const place = autocompleteRef.current?.getPlace();
-      if (!place?.geometry?.location) return;
-      const lat = place.geometry.location.lat();
-      const lng = place.geometry.location.lng();
-      setLocationAndGeocode({ lat, lng });
-      if (place.address_components?.length) {
-        onAddressChange?.(parseAddressComponents(place.address_components));
-      }
-      input.value = "";
-    });
-    return () => {
-      if (typeof listener?.remove === "function") listener.remove();
-      autocompleteRef.current = null;
-    };
-  }, [isLoaded, showSearchInput, setLocationAndGeocode, onAddressChange]);
-
   if (!apiKey) {
     return (
       <div
@@ -219,20 +189,6 @@ const LocationPicker = ({
 
   return (
     <div className={cn("space-y-3", className)}>
-      {showSearchInput && (
-        <div className="space-y-2">
-          <Label className="flex items-center gap-1.5 text-muted-foreground">
-            <Search className="w-3.5 h-3.5" /> Search address or place
-          </Label>
-          <Input
-            ref={searchInputRef}
-            placeholder="Start typing an address (e.g. Whitefield, Bengaluru)"
-            className="w-full"
-            type="text"
-            autoComplete="off"
-          />
-        </div>
-      )}
       {showLinkInput && (
         <div className="space-y-2">
           <Label className="flex items-center gap-1.5 text-muted-foreground">

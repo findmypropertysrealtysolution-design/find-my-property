@@ -10,6 +10,10 @@ export type PropertyType = z.infer<typeof propertyTypeSchema>;
 export const propertyStatusSchema = z.enum(["Pending", "Approved", "Rejected"]);
 export type PropertyStatus = z.infer<typeof propertyStatusSchema>;
 
+/** Furnishing level — aligned with `FurnishingStatus` in `property-view-model`. */
+export const furnishingStatusSchema = z.enum(["furnished", "semi-furnished", "unfurnished"]);
+export type FurnishingStatus = z.infer<typeof furnishingStatusSchema>;
+
 /** Floor plan row stored as JSON on the property. */
 export const floorPlanDtoSchema = z.object({
   id: z.string().optional(),
@@ -38,6 +42,7 @@ export const propertySchema = z.object({
   bathrooms: z.number(),
   area: z.number(),
   yearBuilt: z.number(),
+  furnishing: furnishingStatusSchema.nullable().optional(),
   amenities: z.array(z.string()).nullable().optional(),
   videoUrl: z.string().nullable().optional(),
   propertyImages: z.array(z.string()).nullable().optional(),
@@ -47,6 +52,9 @@ export const propertySchema = z.object({
   reason: z.string().nullable().optional(),
   createdBy: z.number().int().nullable().optional(),
   assignedAgentId: z.number().int().nullable().optional(),
+  /** Map pin — returned by API when stored (e.g. from add-property map). */
+  latitude: z.number().nullable().optional(),
+  longitude: z.number().nullable().optional(),
 });
 
 export type PropertyRow = z.infer<typeof propertySchema>;

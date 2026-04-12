@@ -33,6 +33,8 @@ import {
 } from "@/lib/property-mapper";
 import type { Property } from "@/modules/properties/PropertyCard";
 import { buildPropertyPath } from "@/lib/property-slug";
+import { invalidatePropertyQueries } from "@/lib/invalidate-property-queries";
+import { revalidatePropertyListingCache } from "@/lib/server/revalidate-property-cache";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -381,9 +383,11 @@ const PropertyApproval = () => {
     setIsApproving(true);
     try {
       await api.approveProperty(approveIdFromUrl, { assignedAgentId });
+      await revalidatePropertyListingCache(approveIdFromUrl);
+      await invalidatePropertyQueries(queryClient, approveIdFromUrl);
+      router.refresh();
       toast({ title: "Property approved", description: "Listing agent has been assigned." });
       closeApproveDialog();
-      void queryClient.invalidateQueries({ queryKey: ["properties"] });
     } catch (err) {
       toast({
         title: "Approval failed",
@@ -400,12 +404,14 @@ const PropertyApproval = () => {
     setIsApproving(true);
     try {
       await api.approveProperty(approveIdFromUrl, { skipAgentAssignment: true });
+      await revalidatePropertyListingCache(approveIdFromUrl);
+      await invalidatePropertyQueries(queryClient, approveIdFromUrl);
+      router.refresh();
       toast({
         title: "Property approved",
         description: "Approved without assigning a listing agent. You can assign one later.",
       });
       closeApproveDialog();
-      void queryClient.invalidateQueries({ queryKey: ["properties"] });
     } catch (err) {
       toast({
         title: "Approval failed",
@@ -437,11 +443,13 @@ const PropertyApproval = () => {
     setIsRejecting(true);
     try {
       await api.rejectProperty(rejectTarget, reason);
+      await revalidatePropertyListingCache(rejectTarget);
+      await invalidatePropertyQueries(queryClient, rejectTarget);
+      router.refresh();
       toast({ title: "Property rejected" });
       setRejectReason("");
       setShowRejectDialog(false);
       setRejectTarget(null);
-      void queryClient.invalidateQueries({ queryKey: ["properties"] });
     } catch (err) {
       toast({
         title: "Rejection failed",

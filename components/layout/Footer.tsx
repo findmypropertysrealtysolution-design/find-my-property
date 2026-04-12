@@ -8,7 +8,7 @@ const Footer = () => {
   return (
     <footer className="bg-card border-t border-border">
       <div className="container mx-auto px-4 py-12">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           <div className="space-y-3">
             <Link href="/" className="flex items-center gap-2">
               <div className="w-9 h-9 rounded-lg hero-gradient flex items-center justify-center">
@@ -26,20 +26,11 @@ const Footer = () => {
           <div>
             <h4 className="font-heading font-semibold text-foreground mb-4">Quick Links</h4>
             <ul className="space-y-2 text-sm text-muted-foreground">
-              <li><Link href="/properties" className="hover:text-primary transition-colors">Properties</Link></li>
-              <li><Link href="/owner" className="hover:text-primary transition-colors">For Owners</Link></li>
-              <li><Link href="/dashboard" className="hover:text-primary transition-colors">For Tenants</Link></li>
+              <li><Link href="/browse" className="hover:text-primary transition-colors">Browse listings</Link></li>
+              <li><Link href="/about" className="hover:text-primary transition-colors">About</Link></li>
+              <li><Link href="/contact" className="hover:text-primary transition-colors">Contact</Link></li>
+              <li><Link href="/login" className="hover:text-primary transition-colors">Sign in</Link></li>
               <li><Link href="/sitemap" className="hover:text-primary transition-colors">Sitemap</Link></li>
-            </ul>
-          </div>
-
-          <div>
-            <h4 className="font-heading font-semibold text-foreground mb-4">Services</h4>
-            <ul className="space-y-2 text-sm text-muted-foreground">
-              <li>Home Loans</li>
-              <li>Packers & Movers</li>
-              <li>Home Interiors</li>
-              <li>Legal Assistance</li>
             </ul>
           </div>
 

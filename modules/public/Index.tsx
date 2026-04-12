@@ -2,14 +2,14 @@
 
 import Navbar from "@/components/layout/Navbar"
 import HeroSection from "@/components/layout/HeroSection"
-import PropertyCard from "@/components/property/PropertyCard"
+import PropertyCard, { type Property } from "@/components/property/PropertyCard"
 import Footer from "@/components/layout/Footer"
 import AuthGateModal from "@/components/auth/AuthGateModal"
 import { PropertyCardSkeleton } from "@/components/skeletons/property-card-skeleton"
 import { PropertyGridSkeleton } from "@/components/skeletons/property-grid-skeleton"
 import { useAuth } from "@/contexts/auth-context"
 import { useProperties } from "@/hooks/use-properties"
-import { useState } from "react"
+import { useState, useMemo } from "react"
 import { motion } from "framer-motion"
 import {
   ArrowRight,
@@ -27,6 +27,9 @@ import {
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import { SITE_NAME } from "@/lib/branding"
+import { buildPropertyPath } from "@/lib/property-slug"
+import { LandingAboutSection } from "@/modules/public/LandingAboutSection"
+import { buildPopularCitiesFromProperties } from "@/lib/property-location-options"
 
 const features = [
   {
@@ -60,7 +63,7 @@ const howItWorks = [
     step: 2,
     icon: FileCheck,
     title: "Shortlist",
-    desc: "Save favorites and compare properties.",
+    desc: "Narrow your search and compare listings side by side.",
   },
   {
     step: 3,
@@ -74,15 +77,6 @@ const howItWorks = [
     title: "Move In",
     desc: "Transparent pricing. Sign and move in.",
   },
-]
-
-const popularCities = [
-  { name: "Bangalore", count: "1.2L+", slug: "bangalore" },
-  { name: "Mumbai", count: "95K+", slug: "mumbai" },
-  { name: "Delhi NCR", count: "88K+", slug: "delhi" },
-  { name: "Hyderabad", count: "62K+", slug: "hyderabad" },
-  { name: "Pune", count: "54K+", slug: "pune" },
-  { name: "Chennai", count: "48K+", slug: "chennai" },
 ]
 
 const testimonials = [
@@ -112,17 +106,22 @@ const testimonials = [
 const Index = () => {
   const { isAuthenticated, isAuthReady } = useAuth()
   const { data, isLoading } = useProperties()
-  const featuredProperties = (data ?? []).slice(0, 4)
+  const allProperties = data ?? []
+  const featuredProperties = allProperties.slice(0, 4)
+  const popularCities = useMemo(
+    () => buildPopularCitiesFromProperties(allProperties, 8),
+    [allProperties],
+  )
   const [showAuthGate, setShowAuthGate] = useState(false)
-  const [pendingPropertyId, setPendingPropertyId] = useState<string | null>(
+  const [pendingProperty, setPendingProperty] = useState<Property | null>(
     null
   )
 
-  const handlePropertyCardClick = (e: React.MouseEvent, propertyId: string) => {
+  const handlePropertyCardClick = (e: React.MouseEvent, property: Property) => {
     if (isAuthReady && !isAuthenticated) {
       e.preventDefault()
       e.stopPropagation()
-      setPendingPropertyId(propertyId)
+      setPendingProperty(property)
       setShowAuthGate(true)
     }
   }
@@ -168,6 +167,8 @@ const Index = () => {
         </div>
       </section>
 
+      <LandingAboutSection />
+
       {/* How it works */}
       <section className="bg-muted/30 py-20">
         <div className="container mx-auto px-4">
@@ -207,7 +208,7 @@ const Index = () => {
 
       {/* Stop searching. Start living. - Homplus-style split section */}
       <section className="py-16 md:py-20">
-        <div className="container mx-auto px-4">
+        <div className="container mx-auto px-4  w-full max-w-[1200px]">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -264,7 +265,7 @@ const Index = () => {
 
       {/* Featured Properties */}
       <section className="py-20">
-        <div className="container mx-auto px-4">
+        <div className="container mx-auto px-4  w-full max-w-[1200px]">
           <div className="mb-10 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
             <div className="min-w-0">
               <h2 className="font-heading text-2xl font-bold text-foreground sm:text-3xl">
@@ -275,7 +276,7 @@ const Index = () => {
               </p>
             </div>
             <Button variant="outline" asChild className="hidden w-full shrink-0 sm:flex sm:w-auto">
-              <Link href="/properties">
+              <Link href="/browse">
                 View All <ArrowRight className="ml-2 h-4 w-4" />
               </Link>
             </Button>
@@ -307,7 +308,7 @@ const Index = () => {
                     onClickCapture={(e) =>
                       handlePropertyCardClick(
                         e as unknown as React.MouseEvent,
-                        property.id
+                        property
                       )
                     }
                     className="cursor-pointer"
@@ -325,7 +326,7 @@ const Index = () => {
                     onClickCapture={(e) =>
                       handlePropertyCardClick(
                         e as unknown as React.MouseEvent,
-                        property.id
+                        property
                       )
                     }
                   >
@@ -337,8 +338,8 @@ const Index = () => {
           )}
           <div className="mt-6 text-center sm:hidden">
             <Button variant="outline" asChild>
-              <Link href="/properties">
-                View All Properties <ArrowRight className="ml-2 h-4 w-4" />
+              <Link href="/browse">
+                View all listings <ArrowRight className="ml-2 h-4 w-4" />
               </Link>
             </Button>
           </div>
@@ -353,24 +354,40 @@ const Index = () => {
               Popular Cities
             </h2>
             <p className="text-sm text-muted-foreground">
-              Explore verified listings in top cities
+              Cities ranked by how many listings we currently have on {SITE_NAME}
             </p>
           </div>
-          <div className="flex flex-wrap justify-center gap-3">
-            {popularCities.map((city) => (
-              <Link
-                key={city.slug}
-                href={`/properties?city=${city.slug}`}
-                className="flex items-center gap-2 rounded-xl border border-border bg-card px-5 py-2.5 transition-colors hover:border-primary hover:bg-primary/5"
-              >
-                <MapPin className="h-4 w-4 text-muted-foreground" />
-                <span className="font-medium text-foreground">{city.name}</span>
-                <span className="text-xs text-muted-foreground">
-                  {city.count}
-                </span>
-              </Link>
-            ))}
-          </div>
+          {isLoading ? (
+            <div className="flex flex-wrap justify-center gap-3">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <div
+                  key={i}
+                  className="h-10 w-36 animate-pulse rounded-xl border border-border bg-muted"
+                />
+              ))}
+            </div>
+          ) : popularCities.length === 0 ? (
+            <p className="text-center text-sm text-muted-foreground">
+              No city breakdown yet — listings need a saved city on each property. Browse all properties to explore what&apos;s
+              live.
+            </p>
+          ) : (
+            <div className="flex flex-wrap justify-center gap-3">
+              {popularCities.map((city) => (
+                <Link
+                  key={city.name}
+                  href={`/browse?loc=${encodeURIComponent(city.name)}`}
+                  className="flex items-center gap-2 rounded-xl border border-border bg-card px-5 py-2.5 transition-colors hover:border-primary hover:bg-primary/5"
+                >
+                  <MapPin className="h-4 w-4 text-muted-foreground" />
+                  <span className="font-medium text-foreground">{city.name}</span>
+                  <span className="text-xs tabular-nums text-muted-foreground">
+                    {city.count} {city.count === 1 ? "listing" : "listings"}
+                  </span>
+                </Link>
+              ))}
+            </div>
+          )}
         </div>
       </section>
 
@@ -428,8 +445,8 @@ const Index = () => {
               </p>
             </div>
             <Button size="lg" asChild>
-              <Link href="/properties">
-                Browse Properties <ArrowRight className="ml-2 h-4 w-4" />
+              <Link href="/browse">
+                Browse listings <ArrowRight className="ml-2 h-4 w-4" />
               </Link>
             </Button>
           </div>
@@ -455,15 +472,14 @@ const Index = () => {
         </div>
       </section>
 
-      <Footer />
 
       <AuthGateModal
         open={showAuthGate}
         onClose={() => {
           setShowAuthGate(false)
-          setPendingPropertyId(null)
+          setPendingProperty(null)
         }}
-        pendingPropertyId={pendingPropertyId}
+        endpoint={pendingProperty ? buildPropertyPath(pendingProperty.id, pendingProperty.title) : "/browse"}
       />
     </div>
   )

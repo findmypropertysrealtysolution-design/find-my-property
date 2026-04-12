@@ -7,6 +7,13 @@ import { PropertyGridSkeleton } from "@/components/skeletons/property-grid-skele
 import { useProperties } from "@/hooks/use-properties";
 import { useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
+import {
+  useQueryStates,
+  parseAsString,
+  parseAsInteger,
+  parseAsArrayOf,
+  parseAsStringLiteral,
+} from "nuqs";
 import { Input } from "@/components/ui/input";
 import { Search, SlidersHorizontal, X, Map, LayoutGrid } from "lucide-react";
 import { Label } from "@/components/ui/label";
@@ -15,16 +22,7 @@ import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import PropertiesMap from "@/modules/properties/PropertiesMap";
 import { useAuth } from "@/contexts/auth-context";
-
-const localities = [
-  "All Localities",
-  "Whitefield",
-  "HSR Layout",
-  "Koramangala",
-  "Indiranagar",
-  "Electronic City",
-  "MG Road",
-];
+import { buildAreaFilterOptions, matchesAreaFilter } from "@/lib/property-location-options";
 
 const bhkOptions = [1, 2, 3, 4] as const;
 const furnishingOptions: { value: FurnishingStatus; label: string }[] = [
@@ -41,26 +39,71 @@ const budgetRanges: { label: string; min: number; max: number }[] = [
   { label: "₹1 Lac+", min: 100000, max: 999999999 },
 ];
 
+const furnishingParser = parseAsStringLiteral([
+  "furnished",
+  "semi-furnished",
+  "unfurnished",
+] as const);
+
+const propertyFilterParsers = {
+  type: parseAsStringLiteral(["all", "rent", "buy"] as const).withDefault("all"),
+  q: parseAsString.withDefault(""),
+  loc: parseAsString.withDefault("All Localities"),
+  bhk: parseAsArrayOf(parseAsInteger).withDefault([]),
+  furn: parseAsArrayOf(furnishingParser).withDefault([]),
+  min: parseAsInteger,
+  max: parseAsInteger,
+  budget: parseAsString,
+  view: parseAsStringLiteral(["list", "map"] as const).withDefault("list"),
+};
+
 const Properties = () => {
   const { data, isLoading } = useProperties();
   const { isAuthenticated } = useAuth();
   const allProperties = data ?? [];
   const router = useRouter();
-  const [filter, setFilter] = useState<"all" | "rent" | "buy">("all");
-  const [search, setSearch] = useState("");
-  const [searchLocation, setSearchLocation] = useState("");
-  const [selectedBHK, setSelectedBHK] = useState<number[]>([]);
-  const [locality, setLocality] = useState("All Localities");
-  const [selectedFurnishing, setSelectedFurnishing] = useState<FurnishingStatus[]>([]);
-  const [priceRange, setPriceRange] = useState<[number, number]>([0, 15000000]);
-  const [selectedBudgetPreset, setSelectedBudgetPreset] = useState<string | null>(null);
-  const [viewMode, setViewMode] = useState<"list" | "map">("list");
+  const [
+    {
+      type: filter,
+      q: search,
+      loc: locality,
+      bhk: selectedBHK,
+      furn: selectedFurnishing,
+      min: priceMin,
+      max: priceMax,
+      budget: selectedBudgetPreset,
+      view: viewMode,
+    },
+    setQuery,
+  ] = useQueryStates(propertyFilterParsers, { history: "replace", shallow: true });
+  const searchLocation = search;
   const [filtersOpen, setFiltersOpen] = useState(false);
+  /** Narrows the area chip list without touching URL search */
+  const [areaChipQuery, setAreaChipQuery] = useState("");
+
+  const areaOptions = useMemo(() => buildAreaFilterOptions(allProperties), [allProperties]);
+
+  const visibleAreaChips = useMemo(() => {
+    const q = areaChipQuery.trim().toLowerCase();
+    let list = q
+      ? areaOptions.filter((o) => o.name.toLowerCase().includes(q))
+      : areaOptions;
+    if (locality !== "All Localities" && locality && !list.some((o) => o.name === locality)) {
+      const sel = areaOptions.find((o) => o.name === locality);
+      list = [sel ?? { name: locality, count: 0 }, ...list];
+    }
+    return list;
+  }, [areaOptions, areaChipQuery, locality]);
 
   const maxPrice = useMemo(() => {
     if (allProperties.length === 0) return 1_000_000;
     return Math.max(...allProperties.map((p) => p.priceValue));
   }, [allProperties]);
+
+  const priceRange = useMemo<[number, number]>(
+    () => [priceMin ?? 0, priceMax ?? maxPrice],
+    [priceMin, priceMax, maxPrice],
+  );
 
   const activeFilterCount = [
     selectedBHK.length > 0,
@@ -74,34 +117,41 @@ const Properties = () => {
   const isFiltered = activeFilterCount > 0;
 
   const clearFilters = () => {
-    setSelectedBHK([]);
-    setLocality("All Localities");
-    setSelectedFurnishing([]);
-    setPriceRange([0, maxPrice]);
-    setSelectedBudgetPreset(null);
-    setSearch("");
-    setSearchLocation("");
-    setFilter("all");
+    void setQuery({
+      type: "all",
+      q: "",
+      loc: "All Localities",
+      bhk: [],
+      furn: [],
+      min: null,
+      max: null,
+      budget: null,
+    });
   };
 
   const selectBudgetPreset = (preset: (typeof budgetRanges)[number]) => {
-    setPriceRange([preset.min, preset.max]);
-    setSelectedBudgetPreset(preset.label);
+    void setQuery({
+      min: preset.min,
+      max: preset.max,
+      budget: preset.label,
+    });
   };
   const isBudgetPresetActive = (preset: (typeof budgetRanges)[number]) =>
     selectedBudgetPreset === preset.label ||
     (priceRange[0] === preset.min && priceRange[1] === preset.max);
 
   const toggleBHK = (bhk: number) => {
-    setSelectedBHK((prev) =>
-      prev.includes(bhk) ? prev.filter((b) => b !== bhk) : [...prev, bhk]
-    );
+    void setQuery((prev) => ({
+      bhk: prev.bhk.includes(bhk) ? prev.bhk.filter((b) => b !== bhk) : [...prev.bhk, bhk],
+    }));
   };
 
   const toggleFurnishing = (status: FurnishingStatus) => {
-    setSelectedFurnishing((prev) =>
-      prev.includes(status) ? prev.filter((s) => s !== status) : [...prev, status]
-    );
+    void setQuery((prev) => ({
+      furn: prev.furn.includes(status)
+        ? prev.furn.filter((s) => s !== status)
+        : [...prev.furn, status],
+    }));
   };
 
   const filtered = allProperties.filter((p) => {
@@ -114,9 +164,7 @@ const Properties = () => {
       !searchLocation ||
       p.location.toLowerCase().includes(searchLocation.toLowerCase());
     const matchBHK = selectedBHK.length === 0 || selectedBHK.includes(p.bedrooms);
-    const matchLocality =
-      locality === "All Localities" ||
-      p.location.toLowerCase().includes(locality.toLowerCase());
+    const matchLocality = matchesAreaFilter(p, locality);
     const matchFurnishing =
       selectedFurnishing.length === 0 || selectedFurnishing.includes(p.furnishing);
     const matchPrice = p.priceValue >= priceRange[0] && p.priceValue <= priceRange[1];
@@ -133,9 +181,7 @@ const Properties = () => {
             placeholder="Name or location..."
             value={search}
             onChange={(e) => {
-              const v = e.target.value;
-              setSearch(v);
-              setSearchLocation(v);
+              void setQuery({ q: e.target.value });
             }}
             className="pl-9 h-9 text-sm bg-muted/50 border-border rounded-lg"
           />
@@ -143,23 +189,63 @@ const Properties = () => {
       </div>
 
       <div className="rounded-xl bg-card border border-border p-4">
-        <Label className="text-sm font-medium text-foreground mb-3 block">Location</Label>
-        <div className="flex flex-wrap gap-2">
-          {localities.map((loc) => (
+        <div className="mb-3 flex flex-col gap-1">
+          <Label className="text-sm font-medium text-foreground">Area &amp; city</Label>
+          <p className="text-xs text-muted-foreground">
+            Pulled from your listings · sorted by how often each area appears
+          </p>
+        </div>
+        <div className="mb-3">
+          <Input
+            placeholder="Filter this list…"
+            value={areaChipQuery}
+            onChange={(e) => setAreaChipQuery(e.target.value)}
+            className="h-9 text-sm bg-muted/40"
+            aria-label="Filter area chips"
+          />
+        </div>
+        <div className="flex max-h-44 flex-wrap gap-2 overflow-y-auto pr-1">
+          <button
+            type="button"
+            onClick={() => void setQuery({ loc: "All Localities" })}
+            className={`shrink-0 rounded-full px-3 py-2 text-left text-sm font-medium transition-all ${
+              locality === "All Localities"
+                ? "bg-foreground text-background"
+                : "bg-muted/70 text-muted-foreground hover:bg-muted hover:text-foreground"
+            }`}
+          >
+            All areas
+          </button>
+          {visibleAreaChips.map((opt) => (
             <button
-              key={loc}
+              key={opt.name}
               type="button"
-              onClick={() => setLocality(loc)}
-              className={`px-3 py-2 rounded-full text-sm font-medium transition-all break-words text-left ${
-                locality === loc
+              onClick={() => void setQuery({ loc: opt.name })}
+              className={`inline-flex max-w-[min(100%,14rem)] shrink-0 items-center gap-1.5 rounded-full px-3 py-2 text-left text-sm font-medium transition-all ${
+                locality === opt.name
                   ? "bg-foreground text-background"
                   : "bg-muted/70 text-muted-foreground hover:bg-muted hover:text-foreground"
               }`}
+              title={opt.count > 0 ? `${opt.count} listing${opt.count === 1 ? "" : "s"}` : undefined}
             >
-              {loc}
+              <span className="min-w-0 truncate">{opt.name}</span>
+              {opt.count > 0 ? (
+                <span
+                  className={`rounded-md px-1.5 py-0.5 text-[10px] font-semibold tabular-nums ${
+                    locality === opt.name ? "bg-background/20 text-background" : "bg-background/60 text-foreground"
+                  }`}
+                >
+                  {opt.count}
+                </span>
+              ) : null}
             </button>
           ))}
         </div>
+        {allProperties.length > 0 && areaOptions.length === 0 ? (
+          <p className="mt-2 text-xs text-muted-foreground">
+            No locality or city saved on listings yet — use search above to filter by address text.
+          </p>
+        ) : null}
       </div>
 
       <div className="rounded-xl bg-card border border-border p-4">
@@ -169,7 +255,7 @@ const Properties = () => {
             <button
               key={type}
               type="button"
-              onClick={() => setFilter(filter === type ? "all" : type)}
+              onClick={() => void setQuery({ type: filter === type ? "all" : type })}
               className={`px-3 py-2 rounded-full text-sm font-medium transition-all ${
                 filter === type
                   ? "bg-foreground text-background"
@@ -181,7 +267,7 @@ const Properties = () => {
           ))}
           <button
             type="button"
-            onClick={() => setFilter("all")}
+            onClick={() => void setQuery({ type: "all" })}
             className={`px-3 py-2 rounded-full text-sm font-medium transition-all ${
               filter === "all"
                 ? "bg-foreground text-background"
@@ -212,13 +298,7 @@ const Properties = () => {
           ))}
           <button
             type="button"
-            onClick={() => {
-              if (selectedBHK.includes(4)) {
-                setSelectedBHK((prev) => prev.filter((b) => b !== 4));
-              } else {
-                setSelectedBHK((prev) => [...prev, 4]);
-              }
-            }}
+            onClick={() => toggleBHK(4)}
             className={`px-3 py-2 rounded-full text-sm font-medium transition-all ${
               selectedBHK.includes(4)
                 ? "bg-foreground text-background"
@@ -239,8 +319,7 @@ const Properties = () => {
               type="button"
               onClick={() => {
                 if (isBudgetPresetActive(preset)) {
-                  setPriceRange([0, maxPrice]);
-                  setSelectedBudgetPreset(null);
+                  void setQuery({ min: null, max: null, budget: null });
                 } else {
                   selectBudgetPreset(preset);
                 }
@@ -290,7 +369,7 @@ const Properties = () => {
         variant={viewMode === "list" ? "secondary" : "ghost"}
         size="sm"
         className="shrink-0 rounded-md"
-        onClick={() => setViewMode("list")}
+        onClick={() => void setQuery({ view: "list" })}
         aria-pressed={viewMode === "list"}
       >
         <LayoutGrid className="mr-1.5 h-4 w-4" />
@@ -301,7 +380,7 @@ const Properties = () => {
         variant={viewMode === "map" ? "secondary" : "ghost"}
         size="sm"
         className="shrink-0 rounded-md"
-        onClick={() => setViewMode("map")}
+        onClick={() => void setQuery({ view: "map" })}
         aria-pressed={viewMode === "map"}
       >
         <Map className="mr-1.5 h-4 w-4" />
@@ -346,19 +425,19 @@ const Properties = () => {
         {selectedBHK.length > 0 && (
           <Badge variant="secondary" className="gap-1">
             {selectedBHK.join(", ")} BHK
-            <X className="h-3 w-3 cursor-pointer" onClick={() => setSelectedBHK([])} />
+            <X className="h-3 w-3 cursor-pointer" onClick={() => void setQuery({ bhk: [] })} />
           </Badge>
         )}
         {locality !== "All Localities" && (
           <Badge variant="secondary" className="gap-1">
             {locality}
-            <X className="h-3 w-3 cursor-pointer" onClick={() => setLocality("All Localities")} />
+            <X className="h-3 w-3 cursor-pointer" onClick={() => void setQuery({ loc: "All Localities" })} />
           </Badge>
         )}
         {selectedFurnishing.length > 0 && (
           <Badge variant="secondary" className="gap-1">
             {selectedFurnishing.join(", ")}
-            <X className="h-3 w-3 cursor-pointer" onClick={() => setSelectedFurnishing([])} />
+            <X className="h-3 w-3 cursor-pointer" onClick={() => void setQuery({ furn: [] })} />
           </Badge>
         )}
       </div>

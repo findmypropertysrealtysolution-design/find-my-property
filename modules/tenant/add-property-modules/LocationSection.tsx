@@ -1,7 +1,7 @@
 "use client";
 
-import { useCallback, useState } from "react";
-import { useFormContext } from "react-hook-form";
+import { useCallback, useEffect, useState } from "react";
+import { useFormContext, useWatch } from "react-hook-form";
 import { LocateFixed } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -23,6 +23,41 @@ export const LocationSection = () => {
   const { run: detectLocation, isPending: detectingLocation } = useDetectCurrentLocation();
   const [mapLocation, setMapLocation] = useState<LocationValue | null>(null);
 
+  const watchedLat = useWatch({ control, name: "latitude" });
+  const watchedLng = useWatch({ control, name: "longitude" });
+
+  const syncCoordsToForm = useCallback(
+    (loc: LocationValue | null) => {
+      if (loc && Number.isFinite(loc.lat) && Number.isFinite(loc.lng)) {
+        setValue("latitude", loc.lat, { shouldValidate: true, shouldDirty: true });
+        setValue("longitude", loc.lng, { shouldValidate: true, shouldDirty: true });
+      } else {
+        setValue("latitude", undefined, { shouldValidate: true });
+        setValue("longitude", undefined, { shouldValidate: true });
+      }
+    },
+    [setValue],
+  );
+
+  const handleMapChange = useCallback(
+    (loc: LocationValue | null) => {
+      setMapLocation(loc);
+      syncCoordsToForm(loc);
+    },
+    [syncCoordsToForm],
+  );
+
+  useEffect(() => {
+    if (
+      watchedLat != null &&
+      watchedLng != null &&
+      Number.isFinite(watchedLat) &&
+      Number.isFinite(watchedLng)
+    ) {
+      setMapLocation({ lat: watchedLat, lng: watchedLng });
+    }
+  }, [watchedLat, watchedLng]);
+
   const applyAddressComponents = useCallback(
     (addr: AddressComponents | null) => {
       if (!addr) return;
@@ -42,7 +77,7 @@ export const LocationSection = () => {
 
     if (outcome.status === "success") {
       const { lat, lng, structured } = outcome.data;
-      setMapLocation({ lat, lng });
+      handleMapChange({ lat, lng });
       applyAddressComponents(structured);
       toast({
         variant: "success",
@@ -53,7 +88,7 @@ export const LocationSection = () => {
     }
 
     if (outcome.status === "partial") {
-      setMapLocation({ lat: outcome.lat, lng: outcome.lng });
+      handleMapChange({ lat: outcome.lat, lng: outcome.lng });
       toast({
         title: "Address lookup incomplete",
         description: "Coordinates saved on the map. Enter street and city manually if fields are empty.",
@@ -84,7 +119,7 @@ export const LocationSection = () => {
       description: outcome.message || "Try again or enter your address manually.",
       variant: "destructive",
     });
-  }, [applyAddressComponents, detectLocation, toast]);
+  }, [applyAddressComponents, detectLocation, handleMapChange, toast]);
 
   return (
     <div className="space-y-4 pb-2">
@@ -178,11 +213,10 @@ export const LocationSection = () => {
           <FormLabel>Pin your property on map</FormLabel>
           <LocationPicker
             value={mapLocation}
-            onChange={setMapLocation}
+            onChange={handleMapChange}
             onAddressChange={handleAddressFromMap}
             height={320}
             showLinkInput
-            showSearchInput
           />
           {mapLocation && (
             <p className="mt-2 text-xs text-muted-foreground">

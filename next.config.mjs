@@ -14,16 +14,12 @@ const nextConfig = {
                 hostname: "res.cloudinary.com",
                 pathname: "/**",
             },
-        ],
-    },
-
-    rewrites: async () => {
-        return [
             {
-                source: "/api/:path*",
-                destination: `${process.env.NEXT_PUBLIC_API_URL}/:path*`,
+                protocol: "https",
+                hostname: "framerusercontent.com",
+                pathname: "/**",
             },
-        ];
+        ],
     },
 }
 

@@ -3,6 +3,7 @@
 import { type ColumnDef } from "@tanstack/react-table";
 import { useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   UserPlus,
   Mail,
@@ -52,8 +53,11 @@ import { useCallback, useMemo, useState } from "react";
 import { format } from "date-fns";
 import { normalizePhone } from "@/helpers";
 import { buildPropertyPath } from "@/lib/property-slug";
+import { invalidatePropertyQueries } from "@/lib/invalidate-property-queries";
+import { revalidatePropertyListingCache } from "@/lib/server/revalidate-property-cache";
 
 const AgentManagement = () => {
+  const router = useRouter();
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const { data: agents, isLoading, createAgent, deleteAgent, isCreating } = useAgents();
@@ -93,8 +97,10 @@ const AgentManagement = () => {
     setIsAssigning(true);
     try {
       await api.updateProperty(assignPropertyId, { assignedAgentId: assignAgent.id });
+      await revalidatePropertyListingCache(assignPropertyId);
+      await invalidatePropertyQueries(queryClient, assignPropertyId);
       await queryClient.invalidateQueries({ queryKey: ["agents"] });
-      await queryClient.invalidateQueries({ queryKey: ["properties", "raw"] });
+      router.refresh();
       toast({ title: "Property assigned", description: "The listing agent has been updated." });
       setAssignOpen(false);
       setAssignAgent(null);

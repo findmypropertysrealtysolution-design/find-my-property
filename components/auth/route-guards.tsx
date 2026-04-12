@@ -4,7 +4,7 @@ import type { ReactElement, ReactNode } from "react";
 import { useAuth } from "@/contexts/auth-context";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect } from "react";
-import { getPostAuthRoute } from "@/lib/auth-redirect";
+import { getPostAuthRoute, parseSafeReturnPath } from "@/lib/auth-redirect";
 
 export function RequireAuth({ children }: { children: ReactElement }) {
   const { isAuthenticated, isAuthReady } = useAuth();
@@ -49,9 +49,7 @@ export function PublicAuthRoute({ children }: { children: ReactElement }) {
   useEffect(() => {
     if (!isAuthReady || !isAuthenticated) return;
     const params = new URLSearchParams(window.location.search);
-    const from = params.get("from");
-    const safeFrom =
-      from && from.startsWith("/") && from !== "/login" && from !== "/register" ? from : null;
+    const safeFrom = parseSafeReturnPath(params.get("from"));
     router.replace(safeFrom || getPostAuthRoute(user));
   }, [isAuthReady, isAuthenticated, user, router]);
 

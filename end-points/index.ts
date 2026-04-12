@@ -9,6 +9,7 @@ import { properties } from "@/end-points/properties";
 import { settings } from "@/end-points/settings";
 import { systemLogs } from "@/end-points/system-logs";
 import { admin } from "@/end-points/admin";
+import { contact } from "@/end-points/contact";
 
 export const api = {
   ...auth,
@@ -18,6 +19,7 @@ export const api = {
   ...agents,
   ...leads,
   ...admin,
+  contact,
 };
 
 export type Api = typeof api;

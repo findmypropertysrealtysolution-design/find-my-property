@@ -1,11 +1,12 @@
 "use client";
 
-import { MapPin, Bed, Bath, Heart, Star, BarChart3, Square } from "lucide-react";
+import { MapPin, Bed, Bath, Star, Square } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { motion } from "framer-motion";
 import Link from "next/link";
 import { buildPropertyPath } from "@/lib/property-slug";
 import type { Property } from "@/lib/property-view-model";
+import Image from "next/image";
 
 export type { FurnishingStatus, Property } from "@/lib/property-view-model";
 
@@ -23,10 +24,13 @@ const PropertyCard = ({ property, index = 0 }: { property: Property; index?: num
         {/* Image container */}
         <div className="relative aspect-4/3 overflow-hidden rounded-2xl bg-muted">
           {primaryImage ? (
-            <img
+            <Image
               src={primaryImage}
               alt={property.title}
-              className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+              fill
+              priority
+              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+              className="object-cover transition-transform duration-500 group-hover:scale-105"
             />
           ) : (
             <div
@@ -51,12 +55,6 @@ const PropertyCard = ({ property, index = 0 }: { property: Property; index?: num
                 <Star className="w-4 h-4 text-accent-foreground fill-current" />
               </div>
             )}
-            <button className="w-8 h-8 rounded-full bg-muted/80 backdrop-blur-sm flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors">
-              <BarChart3 className="w-4 h-4" />
-            </button>
-            <button className="w-8 h-8 rounded-full bg-muted/80 backdrop-blur-sm flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors">
-              <Heart className="w-4 h-4" />
-            </button>
           </div>
         </div>
 

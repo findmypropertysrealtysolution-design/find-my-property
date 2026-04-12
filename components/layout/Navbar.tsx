@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Menu, X, Building2, LogOut } from "lucide-react";
@@ -10,6 +10,7 @@ import { useAuth } from "@/contexts/auth-context";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import ThemeToggle from "@/components/ThemeToggle";
 import { SITE_NAME } from "@/lib/branding";
+import { NavLoginRegisterLinks } from "@/components/layout/nav-login-register-links";
 
 const Navbar = () => {
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -24,14 +25,24 @@ const Navbar = () => {
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 bg-card/80 backdrop-blur-xl border-b border-border">
       <div className="container mx-auto flex items-center justify-between h-16 px-4 min-w-0">
-        <Link href="/" className="flex items-center gap-2 shrink-0">
-          <div className="w-9 h-9 rounded-lg hero-gradient flex items-center justify-center">
-            <Building2 className="w-5 h-5 text-primary-foreground" />
-          </div>
-          <span className="font-heading font-bold text-xl text-foreground">
-            {SITE_NAME}
-          </span>
-        </Link>
+        <div className="flex min-w-0 flex-1 items-center gap-6 md:gap-10">
+          <Link href="/" className="flex shrink-0 items-center gap-2">
+            <div className="w-9 h-9 rounded-lg hero-gradient flex items-center justify-center">
+              <Building2 className="w-5 h-5 text-primary-foreground" />
+            </div>
+            <span className="font-heading font-bold text-xl text-foreground">
+              {SITE_NAME}
+            </span>
+          </Link>
+          <nav className="hidden md:flex items-center gap-6 text-sm">
+            <Link href="/about" className="text-muted-foreground transition-colors hover:text-foreground">
+              About
+            </Link>
+            <Link href="/contact" className="text-muted-foreground transition-colors hover:text-foreground">
+              Contact
+            </Link>
+          </nav>
+        </div>
 
         <div className="hidden md:flex items-center gap-3 min-w-0 shrink-0">
           <ThemeToggle />
@@ -60,14 +71,20 @@ const Navbar = () => {
               </Button>
             </>
           ) : (
-            <>
-              <Button variant="outline" size="sm" asChild>
-                <Link href="/login">Log In</Link>
-              </Button>
-              <Button size="sm" asChild>
-                <Link href="/register">Sign Up</Link>
-              </Button>
-            </>
+            <Suspense
+              fallback={
+                <div className="flex gap-2">
+                  <Button variant="outline" size="sm" asChild>
+                    <Link href="/login">Log In</Link>
+                  </Button>
+                  <Button size="sm" asChild>
+                    <Link href="/register">Sign Up</Link>
+                  </Button>
+                </div>
+              }
+            >
+              <NavLoginRegisterLinks />
+            </Suspense>
           )}
         </div>
 
@@ -93,6 +110,22 @@ const Navbar = () => {
                 <span className="font-heading text-sm font-semibold text-foreground">{SITE_NAME}</span>
                 <ThemeToggle className="h-9 w-9" />
               </div>
+              <div className="mb-4 flex flex-col gap-2 border-b border-border pb-4">
+                <Link
+                  href="/about"
+                  className="text-sm text-muted-foreground hover:text-foreground"
+                  onClick={() => setMobileOpen(false)}
+                >
+                  About
+                </Link>
+                <Link
+                  href="/contact"
+                  className="text-sm text-muted-foreground hover:text-foreground"
+                  onClick={() => setMobileOpen(false)}
+                >
+                  Contact
+                </Link>
+              </div>
               <div className="flex gap-2">
                 {isAuthenticated ? (
                   <>
@@ -115,18 +148,27 @@ const Navbar = () => {
                     </Button>
                   </>
                 ) : (
-                  <>
-                    <Button variant="outline" size="sm" className="flex-1" asChild>
-                      <Link href="/login" onClick={() => setMobileOpen(false)}>
-                        Log In
-                      </Link>
-                    </Button>
-                    <Button size="sm" className="flex-1" asChild>
-                      <Link href="/register" onClick={() => setMobileOpen(false)}>
-                        Sign Up
-                      </Link>
-                    </Button>
-                  </>
+                  <Suspense
+                    fallback={
+                      <div className="flex gap-2 w-full">
+                        <Button variant="outline" size="sm" className="flex-1" asChild>
+                          <Link href="/login" onClick={() => setMobileOpen(false)}>
+                            Log In
+                          </Link>
+                        </Button>
+                        <Button size="sm" className="flex-1" asChild>
+                          <Link href="/register" onClick={() => setMobileOpen(false)}>
+                            Sign Up
+                          </Link>
+                        </Button>
+                      </div>
+                    }
+                  >
+                    <NavLoginRegisterLinks
+                      className="w-full"
+                      onNavigate={() => setMobileOpen(false)}
+                    />
+                  </Suspense>
                 )}
               </div>
             </div>

@@ -14,6 +14,17 @@ export async function getCachedProperties(): Promise<Property[]> {
   return rows.map((property) => mapBackendProperty(property));
 }
 
+
+/** Single public property — safe to cache; invalidate with `TAGS.property(id)`. */
+export async function getCachedPropertyById(id: string): Promise<Property | undefined> {
+  "use cache";
+  cacheTag(TAGS.property(id));
+  cacheLife("days");
+
+  const property = await request<BackendProperty>(`/properties/${id}`);
+  return mapBackendProperty(property);
+}
+
 /**
  * Single public property. Tagged with both the global catalog and this id so you can
  * revalidate only `TAGS.property(id)` or the whole list with `TAGS.properties`.

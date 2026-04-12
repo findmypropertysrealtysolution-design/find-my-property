@@ -1,4 +1,4 @@
-import type { Property } from "@/lib/property-view-model";
+import type { Property, FurnishingStatus } from "@/lib/property-view-model";
 import type { FloorPlanDto, PropertyWithRelations } from "@/schema/property";
 
 /** API property row + optional `creator` / `agent` (see `propertyWithRelationsSchema`). */
@@ -18,6 +18,11 @@ export const PropertyType = {
   VILLA: "Villa",
   TOWNHOME: "Townhome",
 } as const;
+
+function normalizeFurnishing(raw: BackendProperty["furnishing"]): FurnishingStatus {
+  if (raw === "furnished" || raw === "semi-furnished" || raw === "unfurnished") return raw;
+  return "unfurnished";
+}
 
 export function mapBackendProperty(property: BackendProperty): Property {
   const isRent = property.listingType === "Rent" || property.listingType === "Lease";
@@ -46,6 +51,8 @@ export function mapBackendProperty(property: BackendProperty): Property {
     title: property.title || "Untitled Property",
     description: property.description ?? undefined,
     location: [property.address, property.locality, property.city].filter(Boolean).join(", "),
+    locality: (property.locality ?? "").trim(),
+    city: (property.city ?? "").trim(),
     price: formattedPrice,
     priceLabel: isRent ? "/month" : "",
     priceValue: Number(property.price) || 0,
@@ -60,7 +67,7 @@ export function mapBackendProperty(property: BackendProperty): Property {
     image: primaryImage,
     images: images.length ? images : undefined,
     isVerified: property.status === PropertyStatus.APPROVED,
-    furnishing: "unfurnished",
+    furnishing: normalizeFurnishing(property.furnishing),
     ownerName: creator?.name?.trim() || "Owner",
     ownerPhone: creator?.phone?.trim() || undefined,
     agentName: agent?.name?.trim() || undefined,
@@ -70,6 +77,17 @@ export function mapBackendProperty(property: BackendProperty): Property {
     videoUrl: property.videoUrl ?? undefined,
     yearBuilt: Number(property.yearBuilt) || undefined,
     assignedAgentId: property.assignedAgentId ?? null,
+    ...(() => {
+      const lat =
+        property.latitude != null && Number.isFinite(Number(property.latitude))
+          ? Number(property.latitude)
+          : undefined;
+      const lng =
+        property.longitude != null && Number.isFinite(Number(property.longitude))
+          ? Number(property.longitude)
+          : undefined;
+      return lat != null && lng != null ? { lat, lng } : {};
+    })(),
   };
 }
 

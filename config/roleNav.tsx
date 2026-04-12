@@ -1,8 +1,6 @@
 import {
   LayoutDashboard,
   Search,
-  Heart,
-  Bell,
   UserCircle,
   Building2,
   LayoutList,
@@ -24,8 +22,6 @@ const tenantNav: NavItem[] = [
   { title: "Overview", url: "/dashboard", icon: LayoutDashboard },
   { title: "My Listings", url: "/listings", icon: Building2 },
   { title: "Browse", url: "/browse", icon: Search },
-  { title: "Favorites", url: "/favorites", icon: Heart },
-  { title: "Alerts", url: "/alerts", icon: Bell },
   { title: "Profile", url: "/profile", icon: UserCircle },
 ];
 
@@ -33,7 +29,6 @@ const agentNav: NavItem[] = [
   { title: "Overview", url: "/dashboard", icon: LayoutDashboard },
   { title: "My Listings", url: "/listings", icon: Building2 },
   { title: "Browse", url: "/browse", icon: Search },
-  { title: "Favorites", url: "/favorites", icon: Heart },
   { title: "Leads", url: "/leads", icon: Users },
   { title: "Reports", url: "/reports", icon: BarChart3 },
   { title: "Profile", url: "/profile", icon: UserCircle },
@@ -46,8 +41,6 @@ const adminNav: NavItem[] = [
   { title: "Browse", url: "/browse", icon: Search },
   { title: "My Listings", url: "/listings", icon: Building2 },
   { title: "All properties", url: "/properties", icon: LayoutList },
-  { title: "Favorites", url: "/favorites", icon: Heart },
-  { title: "Analytics", url: "/analytics", icon: BarChart3 },
   { title: "Profile", url: "/profile", icon: UserCircle },
 ];
 

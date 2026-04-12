@@ -14,7 +14,11 @@ export type FurnishingStatus = "furnished" | "semi-furnished" | "unfurnished";
 export type Property = {
   id: string;
   title: string;
+  /** Full display line from address + area + city */
   location: string;
+  /** Structured fields from API — power browse filters */
+  locality: string;
+  city: string;
   price: string;
   priceLabel: string;
   priceValue: number;

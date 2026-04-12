@@ -10,7 +10,9 @@ const sections = [
     title: "Main",
     links: [
       { href: "/", label: "Home" },
-      { href: "/properties", label: "Browse Properties" },
+      { href: "/about", label: "About" },
+      { href: "/contact", label: "Contact" },
+      { href: "/browse", label: "Browse listings" },
       { href: "/agents", label: "Agents" },
       { href: "/owner", label: "For Owners" },
     ],
@@ -27,8 +29,6 @@ const sections = [
     links: [
       { href: "/dashboard", label: "Dashboard" },
       { href: "/listings", label: "My Listings" },
-      { href: "/favorites", label: "Favorites" },
-      { href: "/alerts", label: "Alerts" },
       { href: "/profile", label: "Profile" },
     ],
   },
@@ -48,7 +48,6 @@ const sections = [
       { href: "/dashboard", label: "Dashboard" },
       { href: "/approvals", label: "Property Approval" },
       { href: "/agents", label: "Agent Management" },
-      { href: "/analytics", label: "Analytics" },
       { href: "/properties", label: "All properties" },
     ],
   },
@@ -115,8 +114,8 @@ const Sitemap = () => {
               <p className="text-sm text-muted-foreground">
                 <strong className="text-foreground">Note:</strong> Individual property pages (e.g. /property/3BHK-house-1) are
                 linked from the{" "}
-                <Link href="/properties" className="text-primary hover:underline">
-                  Browse Properties
+                <Link href="/browse" className="text-primary hover:underline">
+                  Browse listings
                 </Link>{" "}
                 page. For search engines, see{" "}
                 <a href="/sitemap.xml" className="text-primary hover:underline" target="_blank" rel="noopener noreferrer">
