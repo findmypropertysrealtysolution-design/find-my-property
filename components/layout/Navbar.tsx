@@ -62,7 +62,7 @@ const Navbar = () => {
             </span>
           </Link>
           <nav className="hidden md:flex items-center gap-6 text-sm">
-            <DropdownMenu>
+            <DropdownMenu modal={false}>
               <DropdownMenuTrigger className="inline-flex items-center gap-1 text-muted-foreground transition-colors hover:text-foreground focus:outline-none">
                 Services
                 <ChevronDown className="h-3.5 w-3.5" aria-hidden />

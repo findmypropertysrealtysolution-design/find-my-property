@@ -129,6 +129,13 @@
     }
 }
 
+/* html body[data-scroll-locked] {
+	--removed-body-scroll-bar-size: 0px !important;
+  overflow-y: scroll !important;
+  margin-right: 0px !important;
+  padding-right: 0px !important;
+} */
+
 @layer utilities {
   .hero-gradient {
     background: linear-gradient(135deg, var(--hero-from, hsl(174 62% 32%)) 0%, var(--hero-to, hsl(174 50% 22%)) 100%);

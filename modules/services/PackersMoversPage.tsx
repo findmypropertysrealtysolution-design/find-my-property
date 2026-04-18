@@ -24,13 +24,8 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Combobox } from "@/components/ui/combobox";
+import { DatePicker } from "@/components/ui/date-picker";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useAuth } from "@/contexts/auth-context";
@@ -309,26 +304,20 @@ export default function PackersMoversPage() {
                     <FormField
                       control={form.control}
                       name="moveType"
-                      render={({ field }) => (
+                      render={({ field, fieldState }) => (
                         <FormItem>
                           <FormLabel required>Move type</FormLabel>
-                          <Select
-                            onValueChange={field.onChange}
-                            value={field.value}
-                          >
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Select move type" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              {MOVE_TYPE_OPTIONS.map((o) => (
-                                <SelectItem key={o.value} value={o.value}>
-                                  {o.label}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
+                          <FormControl>
+                            <Combobox
+                              options={MOVE_TYPE_OPTIONS}
+                              value={field.value ?? ""}
+                              onValueChange={field.onChange}
+                              placeholder="Select move type"
+                              searchPlaceholder="Search move type…"
+                              disableSearch={MOVE_TYPE_OPTIONS.length <= 6}
+                              aria-invalid={!!fieldState.error}
+                            />
+                          </FormControl>
                           <FormMessage />
                         </FormItem>
                       )}
@@ -336,26 +325,20 @@ export default function PackersMoversPage() {
                     <FormField
                       control={form.control}
                       name="bhk"
-                      render={({ field }) => (
+                      render={({ field, fieldState }) => (
                         <FormItem>
                           <FormLabel required>Home size</FormLabel>
-                          <Select
-                            onValueChange={field.onChange}
-                            value={field.value}
-                          >
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Select size" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              {BHK_OPTIONS.map((o) => (
-                                <SelectItem key={o.value} value={o.value}>
-                                  {o.label}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
+                          <FormControl>
+                            <Combobox
+                              options={BHK_OPTIONS}
+                              value={field.value ?? ""}
+                              onValueChange={field.onChange}
+                              placeholder="Select size"
+                              searchPlaceholder="Search size…"
+                              disableSearch={BHK_OPTIONS.length <= 6}
+                              aria-invalid={!!fieldState.error}
+                            />
+                          </FormControl>
                           <FormMessage />
                         </FormItem>
                       )}
@@ -461,11 +444,16 @@ export default function PackersMoversPage() {
                     <FormField
                       control={form.control}
                       name="preferredDate"
-                      render={({ field }) => (
+                      render={({ field, fieldState }) => (
                         <FormItem>
                           <FormLabel>Preferred date</FormLabel>
                           <FormControl>
-                            <Input type="date" {...field} />
+                            <DatePicker
+                              value={field.value ?? ""}
+                              onValueChange={field.onChange}
+                              minDate={new Date()}
+                              aria-invalid={!!fieldState.error}
+                            />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -474,26 +462,19 @@ export default function PackersMoversPage() {
                     <FormField
                       control={form.control}
                       name="preferredSlot"
-                      render={({ field }) => (
+                      render={({ field, fieldState }) => (
                         <FormItem>
                           <FormLabel>Preferred slot</FormLabel>
-                          <Select
-                            onValueChange={field.onChange}
-                            value={field.value ?? ""}
-                          >
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Anytime" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              {SLOT_OPTIONS.map((o) => (
-                                <SelectItem key={o.value} value={o.value}>
-                                  {o.label}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
+                          <FormControl>
+                            <Combobox
+                              options={SLOT_OPTIONS}
+                              value={field.value ?? ""}
+                              onValueChange={field.onChange}
+                              placeholder="Anytime"
+                              disableSearch
+                              aria-invalid={!!fieldState.error}
+                            />
+                          </FormControl>
                           <FormMessage />
                         </FormItem>
                       )}

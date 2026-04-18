@@ -24,6 +24,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { DatePicker } from "@/components/ui/date-picker";
 import {
   Select,
   SelectContent,
@@ -471,11 +472,16 @@ export default function PaintingCleaningPage() {
                     <FormField
                       control={form.control}
                       name="preferredDate"
-                      render={({ field }) => (
+                      render={({ field, fieldState }) => (
                         <FormItem>
                           <FormLabel>Preferred date</FormLabel>
                           <FormControl>
-                            <Input type="date" {...field} />
+                            <DatePicker
+                              value={field.value ?? ""}
+                              onValueChange={field.onChange}
+                              minDate={new Date()}
+                              aria-invalid={!!fieldState.error}
+                            />
                           </FormControl>
                           <FormMessage />
                         </FormItem>

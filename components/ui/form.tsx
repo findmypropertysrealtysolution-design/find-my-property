@@ -79,7 +79,7 @@ const FormLabel = React.forwardRef<
   const { error, formItemId } = useFormField();
 
   return (
-    <Label ref={ref} className={cn(error && "text-destructive", className)} htmlFor={formItemId} {...props}>
+    <Label ref={ref} className={cn(error && "text-destructive" ,className)} htmlFor={formItemId} {...props}>
       {children}
       {required ? (
         <span className="text-destructive ml-0.5" aria-hidden>
@@ -92,15 +92,16 @@ const FormLabel = React.forwardRef<
 FormLabel.displayName = "FormLabel";
 
 const FormControl = React.forwardRef<React.ElementRef<typeof Slot>, React.ComponentPropsWithoutRef<typeof Slot>>(
-  ({ ...props }, ref) => {
+  ({ className, ...props }, ref) => {
     const { error, formItemId, formDescriptionId, formMessageId } = useFormField();
 
     return (
-      <Slot
+      <Slot 
         ref={ref}
         id={formItemId}
         aria-describedby={!error ? `${formDescriptionId}` : `${formDescriptionId} ${formMessageId}`}
         aria-invalid={!!error}
+        className={cn("mt-1.5", className)}
         {...props}
       />
     );

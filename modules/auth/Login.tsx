@@ -171,7 +171,7 @@ const handleVerifyOtp = async (e?: React.SubmitEvent<HTMLFormElement>) => {
                 <motion.div
                   initial={{ opacity: 0, height: 0, marginTop: 0 }}
                   animate={{ opacity: 1, height: "auto", marginTop: 16 }}
-                  className="space-y-2 overflow-hidden"
+                  className="space-y-2"
                 >
                   <label className="text-sm font-medium leading-none text-foreground ml-1">
                     One-Time Password

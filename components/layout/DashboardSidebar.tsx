@@ -19,6 +19,7 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { LucideIcon } from "lucide-react";
 import { SITE_NAME } from "@/lib/branding";
+import { cn } from "@/lib/utils";
 
 interface NavItem {
   title: string;
@@ -38,14 +39,36 @@ const DashboardSidebar = ({ items }: DashboardSidebarProps) => {
   return (
     <Sidebar collapsible="icon">
       <SidebarContent >
-        {/* Logo */}
-        <div className="p-4 border-b border-border">
-          <Link href="/" className="flex items-center gap-2">
-            <div className="w-9 h-9 rounded-lg hero-gradient flex items-center justify-center shrink-0">
-              <Building2 className="w-5 h-5 text-primary-foreground" />
+        {/* Logo — collapses to a centered icon tile so it fits the 3rem icon rail */}
+        <div
+          className={cn(
+            "flex h-14 items-center border-b border-border",
+            collapsed ? "justify-center px-0" : "px-4",
+          )}
+        >
+          <Link
+            href="/"
+            className={cn(
+              "flex items-center gap-2 min-w-0",
+              collapsed && "justify-center",
+            )}
+            aria-label={SITE_NAME}
+          >
+            <div
+              className={cn(
+                "rounded-lg hero-gradient flex items-center justify-center shrink-0",
+                collapsed ? "w-8 h-8" : "w-9 h-9",
+              )}
+            >
+              <Building2
+                className={cn(
+                  "text-primary-foreground",
+                  collapsed ? "w-4 h-4" : "w-5 h-5",
+                )}
+              />
             </div>
             {!collapsed && (
-              <span className="font-heading font-bold text-lg text-foreground">
+              <span className="font-heading font-bold text-lg text-foreground truncate">
                 {SITE_NAME}
               </span>
             )}
