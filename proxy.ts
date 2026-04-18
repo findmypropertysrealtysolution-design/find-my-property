@@ -23,12 +23,14 @@ function isPublicPath(pathname: string): boolean {
   if (pathname === "/browse") return true;
   if (pathname === "/owner") return true;
   if (pathname.startsWith("/property/")) return true;
+  if (pathname === "/packers-movers") return true;
+  if (pathname === "/painting-cleaning") return true;
 
   return false;
 }
 
 /** Flat routes only admins may open */
-const ADMIN_ONLY = new Set(["/approvals", "/agents", "/properties"]);
+const ADMIN_ONLY = new Set(["/approvals", "/agents", "/properties", "/admin"]);
 
 /** Agent + admin (not tenant) */
 const AGENT_SCOPED = new Set(["/leads", "/reports"]);

@@ -10,6 +10,8 @@ import { settings } from "@/end-points/settings";
 import { systemLogs } from "@/end-points/system-logs";
 import { admin } from "@/end-points/admin";
 import { contact } from "@/end-points/contact";
+import { serviceRequests } from "@/end-points/service-requests";
+import { uploads } from "@/end-points/uploads";
 
 export const api = {
   ...auth,
@@ -19,6 +21,8 @@ export const api = {
   ...agents,
   ...leads,
   ...admin,
+  ...serviceRequests,
+  ...uploads,
   contact,
 };
 

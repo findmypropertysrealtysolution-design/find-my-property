@@ -1,0 +1,161 @@
+import { z } from "zod";
+
+const phoneRegex = /^\+?[0-9\s\-()]{7,20}$/;
+
+const baseSchema = z.object({
+  name: z
+    .string()
+    .trim()
+    .min(2, "Please enter your name (min 2 characters).")
+    .max(120, "Name is too long."),
+  phone: z
+    .string()
+    .trim()
+    .regex(phoneRegex, "Please enter a valid phone number."),
+  email: z
+    .string()
+    .trim()
+    .email("Enter a valid email.")
+    .max(160)
+    .optional()
+    .or(z.literal("")),
+  city: z.string().trim().max(120).optional().or(z.literal("")),
+  addressLine: z.string().trim().max(500).optional().or(z.literal("")),
+  pincode: z
+    .string()
+    .trim()
+    .regex(/^[0-9]{4,8}$/, "Pincode must be 4-8 digits.")
+    .optional()
+    .or(z.literal("")),
+  preferredDate: z.string().trim().optional().or(z.literal("")),
+  preferredSlot: z
+    .enum(["morning", "afternoon", "evening"])
+    .optional(),
+});
+
+/** Geocoded location captured via Google Places Autocomplete. */
+export const stopSchema = z.object({
+  label: z
+    .string()
+    .trim()
+    .min(3, "Pick a location from the suggestions.")
+    .max(500),
+  lat: z.number(),
+  lng: z.number(),
+  placeId: z.string().optional(),
+  notes: z.string().trim().max(500).optional().or(z.literal("")),
+});
+
+export type StopValue = z.infer<typeof stopSchema>;
+
+export const packersMoversSchema = baseSchema.extend({
+  moveType: z.enum(["home", "office", "vehicle"], {
+    required_error: "Pick a move type.",
+  }),
+  bhk: z.enum(["1rk", "1", "2", "3", "4+"], {
+    required_error: "Select size.",
+  }),
+  pickup: stopSchema.refine((v) => v.label.trim().length >= 3, {
+    message: "Select a pickup location.",
+  }),
+  drops: z
+    .array(stopSchema)
+    .min(1, "Add at least one drop location.")
+    .max(5, "Up to 5 drop locations are supported."),
+  hasPackingMaterial: z.boolean().optional(),
+  notes: z.string().trim().max(2000).optional().or(z.literal("")),
+});
+
+export type PackersMoversFormValues = z.infer<typeof packersMoversSchema>;
+
+export const paintingCleaningSchema = baseSchema.extend({
+  subType: z.enum(
+    [
+      "full_painting",
+      "partial_painting",
+      "deep_cleaning",
+      "bathroom_cleaning",
+      "sofa_cleaning",
+      "kitchen_cleaning",
+    ],
+    { required_error: "Pick a service." },
+  ),
+  propertyType: z.enum(["apartment", "villa", "office"], {
+    required_error: "Pick a property type.",
+  }),
+  bhkOrSqft: z
+    .string()
+    .trim()
+    .min(1, "Tell us the size (e.g. 2 BHK or 950 sqft).")
+    .max(60),
+  location: stopSchema.refine((v) => v.label.trim().length >= 3, {
+    message: "Select a service location.",
+  }),
+  notes: z.string().trim().max(2000).optional().or(z.literal("")),
+});
+
+export type PaintingCleaningFormValues = z.infer<
+  typeof paintingCleaningSchema
+>;
+
+export const MOVE_TYPE_OPTIONS: Array<{
+  value: PackersMoversFormValues["moveType"];
+  label: string;
+}> = [
+  { value: "home", label: "Home shifting" },
+  { value: "office", label: "Office shifting" },
+  { value: "vehicle", label: "Vehicle transport" },
+];
+
+export const BHK_OPTIONS: Array<{
+  value: PackersMoversFormValues["bhk"];
+  label: string;
+}> = [
+  { value: "1rk", label: "1 RK" },
+  { value: "1", label: "1 BHK" },
+  { value: "2", label: "2 BHK" },
+  { value: "3", label: "3 BHK" },
+  { value: "4+", label: "4+ BHK" },
+];
+
+export const SUB_TYPE_OPTIONS: Array<{
+  value: PaintingCleaningFormValues["subType"];
+  label: string;
+  group: "Painting" | "Cleaning";
+}> = [
+  { value: "full_painting", label: "Full home painting", group: "Painting" },
+  {
+    value: "partial_painting",
+    label: "Partial / room painting",
+    group: "Painting",
+  },
+  { value: "deep_cleaning", label: "Deep home cleaning", group: "Cleaning" },
+  {
+    value: "bathroom_cleaning",
+    label: "Bathroom cleaning",
+    group: "Cleaning",
+  },
+  { value: "sofa_cleaning", label: "Sofa / upholstery cleaning", group: "Cleaning" },
+  {
+    value: "kitchen_cleaning",
+    label: "Kitchen deep cleaning",
+    group: "Cleaning",
+  },
+];
+
+export const PROPERTY_TYPE_OPTIONS: Array<{
+  value: PaintingCleaningFormValues["propertyType"];
+  label: string;
+}> = [
+  { value: "apartment", label: "Apartment" },
+  { value: "villa", label: "Villa / Independent house" },
+  { value: "office", label: "Office / Shop" },
+];
+
+export const SLOT_OPTIONS = [
+  { value: "morning", label: "Morning (8am - 12pm)" },
+  { value: "afternoon", label: "Afternoon (12pm - 4pm)" },
+  { value: "evening", label: "Evening (4pm - 8pm)" },
+] as const;
+
+export const MAX_DROPS = 5;

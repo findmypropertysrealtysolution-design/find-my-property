@@ -1,9 +1,22 @@
+"use client";
+
 import { Building2, Heart, Phone, Mail } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 import { SITE_NAME, SUPPORT_EMAIL } from "@/lib/branding";
+import { useSettings } from "@/contexts/settings-context";
 
 const Footer = () => {
-  const settings = { siteName: SITE_NAME };
+  const { settings } = useSettings();
+
+  // Fall back to compile-time branding constants so the footer still renders
+  // correctly during the initial client-side settings fetch and in contexts
+  // where the settings API is unreachable (e.g. offline static renders).
+  const siteName = settings?.siteName?.trim() || SITE_NAME;
+  const email = settings?.supportEmail?.trim() || SUPPORT_EMAIL;
+  const phone = settings?.supportPhone?.trim() || null;
+  const logoUrl = settings?.primaryLogoUrl?.trim() || null;
+  const year = new Date().getFullYear();
 
   return (
     <footer className="bg-card border-t border-border">
@@ -11,15 +24,28 @@ const Footer = () => {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           <div className="space-y-3">
             <Link href="/" className="flex items-center gap-2">
-              <div className="w-9 h-9 rounded-lg hero-gradient flex items-center justify-center">
-                <Building2 className="w-5 h-5 text-primary-foreground" />
-              </div>
+              {logoUrl ? (
+                <span className="relative inline-flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-muted">
+                  <Image
+                    src={logoUrl}
+                    alt={siteName}
+                    fill
+                    sizes="36px"
+                    unoptimized
+                    className="object-contain"
+                  />
+                </span>
+              ) : (
+                <div className="w-9 h-9 rounded-lg hero-gradient flex items-center justify-center">
+                  <Building2 className="w-5 h-5 text-primary-foreground" />
+                </div>
+              )}
               <span className="font-heading font-bold text-xl text-foreground">
-                {SITE_NAME}
+                {siteName}
               </span>
             </Link>
             <p className="text-sm text-muted-foreground max-w-xs wrap-break-word">
-              {SITE_NAME} helps you find and list homes with verified details and direct owner contact.
+              {siteName} helps you find and list homes with verified details and direct owner contact.
             </p>
           </div>
 
@@ -37,14 +63,32 @@ const Footer = () => {
           <div>
             <h4 className="font-heading font-semibold text-foreground mb-4">Contact</h4>
             <ul className="space-y-2 text-sm text-muted-foreground wrap-break-word">
-              <li className="flex items-center gap-2 min-w-0"><Phone className="w-4 h-4 shrink-0" /> <span className="min-w-0">+91 98765 43210</span></li>
-              <li className="flex items-center gap-2 min-w-0"><Mail className="w-4 h-4 shrink-0" /> <a href={`mailto:${SUPPORT_EMAIL}`} className="min-w-0 break-all hover:text-primary transition-colors">{SUPPORT_EMAIL}</a></li>
+              {phone ? (
+                <li className="flex items-center gap-2 min-w-0">
+                  <Phone className="w-4 h-4 shrink-0" />
+                  <a
+                    href={`tel:${phone.replace(/\s+/g, "")}`}
+                    className="min-w-0 break-all hover:text-primary transition-colors"
+                  >
+                    {phone}
+                  </a>
+                </li>
+              ) : null}
+              <li className="flex items-center gap-2 min-w-0">
+                <Mail className="w-4 h-4 shrink-0" />
+                <a
+                  href={`mailto:${email}`}
+                  className="min-w-0 break-all hover:text-primary transition-colors"
+                >
+                  {email}
+                </a>
+              </li>
             </ul>
           </div>
         </div>
 
         <div className="mt-10 pt-6 border-t border-border flex flex-col sm:flex-row justify-between items-center gap-4">
-          <p className="text-xs text-muted-foreground">© 2026 {settings?.siteName ?? SITE_NAME}. All rights reserved.</p>
+          <p className="text-xs text-muted-foreground">© {year} {siteName}. All rights reserved.</p>
           <p className="text-xs text-muted-foreground flex items-center gap-1">
             Made with <Heart className="w-3 h-3 text-accent" /> in India
           </p>

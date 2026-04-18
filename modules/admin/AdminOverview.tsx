@@ -1,12 +1,16 @@
 "use client";
 
+import { useMemo } from "react";
+import Link from "next/link";
 import { motion } from "framer-motion";
-import { Building2, Users, CheckCircle, Clock, AlertTriangle, Shield, Globe, Terminal } from "lucide-react";
+import { Building2, Users, CheckCircle, Clock, ArrowRight } from "lucide-react";
 import { useSystemLogs } from "@/hooks/use-system-logs";
 import { useAdminDashboardStats } from "@/hooks/use-admin-dashboard-stats";
-import { formatDistanceToNow } from "date-fns";
 import type { AdminDashboardStats, DashboardStatBlock } from "@/schema/admin-dashboard-stats";
 import { Skeleton } from "@/components/ui/skeleton";
+import { ServiceRequestsOverviewTiles } from "@/modules/admin/ServiceRequestsAdmin";
+import { formatLogEvent } from "@/lib/activity-log";
+import { ActivityItem } from "@/components/admin/ActivityItem";
 
 const numberFmt = new Intl.NumberFormat("en-IN", { maximumFractionDigits: 0 });
 
@@ -91,8 +95,18 @@ function StatCard({
 }
 
 const AdminOverview = () => {
-  const { data: logs, isLoading: logsLoading } = useSystemLogs();
+  const { data: logs, isLoading: logsLoading } = useSystemLogs({ limit: 40 });
   const { data: stats, isLoading: statsLoading, isError: statsError } = useAdminDashboardStats();
+
+  // Hide chatty events (e.g. silent token refresh) from the overview panel.
+  const events = useMemo(
+    () =>
+      (logs ?? [])
+        .map(formatLogEvent)
+        .filter((ev) => !ev.chatty)
+        .slice(0, 8),
+    [logs],
+  );
 
   return (
     <div className="space-y-6">
@@ -122,63 +136,34 @@ const AdminOverview = () => {
         ))}
       </div>
 
+      <ServiceRequestsOverviewTiles />
+
       <div className="rounded-xl border border-border bg-card p-5">
-        <h2 className="font-heading mb-4 font-semibold text-foreground">System Activity logs</h2>
-        <div className="space-y-3">
+        <div className="mb-4 flex items-center justify-between gap-3">
+          <div>
+            <h2 className="font-heading font-semibold text-foreground">Recent activity</h2>
+            <p className="text-xs text-muted-foreground">
+              Latest 8 actions across the platform.
+            </p>
+          </div>
+          <Link
+            href="/admin/activity"
+            className="inline-flex items-center gap-1 text-xs font-medium text-primary transition-colors hover:text-primary/80"
+          >
+            View all <ArrowRight className="h-3 w-3" />
+          </Link>
+        </div>
+        <div className="space-y-1">
           {logsLoading ? (
-            <div className="py-10 text-center text-sm italic text-muted-foreground">Loading logs...</div>
-          ) : (logs || []).length === 0 ? (
-            <div className="py-10 text-center text-sm text-muted-foreground">No system activity logged yet.</div>
+            <div className="py-10 text-center text-sm italic text-muted-foreground">
+              Loading activity…
+            </div>
+          ) : events.length === 0 ? (
+            <div className="py-10 text-center text-sm text-muted-foreground">
+              No activity yet. It will show up here as people use the platform.
+            </div>
           ) : (
-            (logs || []).slice(0, 8).map((log) => (
-              <div
-                key={log.id}
-                className="flex items-start gap-3 rounded-lg border-b border-border px-2 py-2 transition-colors last:border-0 hover:bg-muted/30"
-              >
-                <div
-                  className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${
-                    log.level === "error"
-                      ? "bg-red-100 text-red-600"
-                      : log.level === "warn"
-                        ? "bg-amber-100 text-amber-600"
-                        : log.level === "debug"
-                          ? "bg-slate-100 text-slate-600"
-                          : "bg-blue-100 text-blue-600"
-                  }`}
-                >
-                  {log.level === "error" ? (
-                    <AlertTriangle className="h-4 w-4" />
-                  ) : log.level === "warn" ? (
-                    <Shield className="h-4 w-4" />
-                  ) : log.method ? (
-                    <Globe className="h-4 w-4" />
-                  ) : (
-                    <Terminal className="h-4 w-4" />
-                  )}
-                </div>
-                <div className="min-w-0 flex-1">
-                  <div className="mb-0.5 flex items-center gap-2">
-                    <p className={`text-sm font-medium ${log.level === "error" ? "text-red-700" : "text-foreground"}`}>
-                      {log.message}
-                    </p>
-                    <span className="rounded bg-muted px-1.5 py-0.5 text-[10px] font-bold tracking-wider uppercase opacity-60">
-                      {log.level}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
-                    {log.method && log.url && (
-                      <span className="rounded bg-muted/50 px-1 font-mono">
-                        {log.method} {log.url}
-                      </span>
-                    )}
-                    {log.userId && <span>• User #{log.userId}</span>}
-                  </div>
-                </div>
-                <span className="whitespace-nowrap pt-1 text-xs text-muted-foreground">
-                  {formatDistanceToNow(new Date(log.timestamp), { addSuffix: true })}
-                </span>
-              </div>
-            ))
+            events.map((event) => <ActivityItem key={event.id} event={event} />)
           )}
         </div>
       </div>

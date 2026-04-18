@@ -1,21 +1,35 @@
 "use client";
 
 import { Suspense, useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Menu, X, Building2, LogOut } from "lucide-react";
+import { Menu, X, Building2, LogOut, ChevronDown, Truck, PaintBucket } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/contexts/auth-context";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import ThemeToggle from "@/components/ThemeToggle";
 import { SITE_NAME } from "@/lib/branding";
+import { useSettings } from "@/contexts/settings-context";
 import { NavLoginRegisterLinks } from "@/components/layout/nav-login-register-links";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 const Navbar = () => {
   const [mobileOpen, setMobileOpen] = useState(false);
   const router = useRouter();
   const { user, isAuthenticated, logout } = useAuth();
+  const { settings } = useSettings();
+
+  // Admin-configured branding with sensible fallbacks so the navbar never
+  // renders blank while the settings query is in-flight or offline.
+  const siteName = settings?.siteName?.trim() || SITE_NAME;
+  const logoUrl = settings?.primaryLogoUrl?.trim() || null;
 
   const getDashboardLink = () => {
     if (!user) return "/login";
@@ -27,14 +41,57 @@ const Navbar = () => {
       <div className="container mx-auto flex items-center justify-between h-16 px-4 min-w-0">
         <div className="flex min-w-0 flex-1 items-center gap-6 md:gap-10">
           <Link href="/" className="flex shrink-0 items-center gap-2">
-            <div className="w-9 h-9 rounded-lg hero-gradient flex items-center justify-center">
-              <Building2 className="w-5 h-5 text-primary-foreground" />
-            </div>
+            {logoUrl ? (
+              <span className="relative inline-flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-muted">
+                <Image
+                  src={logoUrl}
+                  alt={siteName}
+                  fill
+                  sizes="36px"
+                  unoptimized
+                  className="object-contain"
+                />
+              </span>
+            ) : (
+              <div className="w-9 h-9 rounded-lg hero-gradient flex items-center justify-center">
+                <Building2 className="w-5 h-5 text-primary-foreground" />
+              </div>
+            )}
             <span className="font-heading font-bold text-xl text-foreground">
-              {SITE_NAME}
+              {siteName}
             </span>
           </Link>
           <nav className="hidden md:flex items-center gap-6 text-sm">
+            <DropdownMenu>
+              <DropdownMenuTrigger className="inline-flex items-center gap-1 text-muted-foreground transition-colors hover:text-foreground focus:outline-none">
+                Services
+                <ChevronDown className="h-3.5 w-3.5" aria-hidden />
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" className="w-64">
+                <DropdownMenuItem asChild>
+                  <Link href="/packers-movers" className="flex items-start gap-3">
+                    <Truck className="mt-0.5 h-4 w-4 text-primary" aria-hidden />
+                    <div className="leading-tight">
+                      <p className="font-medium text-foreground">Packers &amp; Movers</p>
+                      <p className="text-xs text-muted-foreground">
+                        Verified crews, transparent pricing
+                      </p>
+                    </div>
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href="/painting-cleaning" className="flex items-start gap-3">
+                    <PaintBucket className="mt-0.5 h-4 w-4 text-primary" aria-hidden />
+                    <div className="leading-tight">
+                      <p className="font-medium text-foreground">Painting &amp; Cleaning</p>
+                      <p className="text-xs text-muted-foreground">
+                        Painting, deep cleaning & more
+                      </p>
+                    </div>
+                  </Link>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
             <Link href="/about" className="text-muted-foreground transition-colors hover:text-foreground">
               About
             </Link>
@@ -107,24 +164,45 @@ const Navbar = () => {
           >
             <div className="px-4 py-3">
               <div className="mb-3 flex items-center justify-between">
-                <span className="font-heading text-sm font-semibold text-foreground">{SITE_NAME}</span>
+                <span className="font-heading text-sm font-semibold text-foreground">{siteName}</span>
                 <ThemeToggle className="h-9 w-9" />
               </div>
-              <div className="mb-4 flex flex-col gap-2 border-b border-border pb-4">
+              <div className="mb-4 flex flex-col gap-3 border-b border-border pb-4">
+                <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground/80">
+                  Services
+                </p>
                 <Link
-                  href="/about"
-                  className="text-sm text-muted-foreground hover:text-foreground"
+                  href="/packers-movers"
+                  className="flex items-center gap-2 text-sm text-foreground hover:text-primary"
                   onClick={() => setMobileOpen(false)}
                 >
-                  About
+                  <Truck className="h-4 w-4 text-primary" aria-hidden />
+                  Packers &amp; Movers
                 </Link>
                 <Link
-                  href="/contact"
-                  className="text-sm text-muted-foreground hover:text-foreground"
+                  href="/painting-cleaning"
+                  className="flex items-center gap-2 text-sm text-foreground hover:text-primary"
                   onClick={() => setMobileOpen(false)}
                 >
-                  Contact
+                  <PaintBucket className="h-4 w-4 text-primary" aria-hidden />
+                  Painting &amp; Cleaning
                 </Link>
+                <div className="mt-1 border-t border-border pt-3 flex flex-col gap-2">
+                  <Link
+                    href="/about"
+                    className="text-sm text-muted-foreground hover:text-foreground"
+                    onClick={() => setMobileOpen(false)}
+                  >
+                    About
+                  </Link>
+                  <Link
+                    href="/contact"
+                    className="text-sm text-muted-foreground hover:text-foreground"
+                    onClick={() => setMobileOpen(false)}
+                  >
+                    Contact
+                  </Link>
+                </div>
               </div>
               <div className="flex gap-2">
                 {isAuthenticated ? (

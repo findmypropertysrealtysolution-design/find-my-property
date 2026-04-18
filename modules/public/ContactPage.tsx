@@ -12,9 +12,10 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { SITE_NAME, SUPPORT_EMAIL } from "@/lib/branding";
 import { useToast } from "@/hooks/use-toast";
+import { useSettings } from "@/contexts/settings-context";
 import { api } from "@/lib/api";
 
-const SUPPORT_PHONE = "+91 98765 43210";
+const DEFAULT_SUPPORT_PHONE = "+91 98765 43210";
 
 const RECAPTCHA_SITE_KEY =
   process.env.NEXT_PUBLIC_GOOGLE_RECAPTCHA_SITE_KEY?.trim() ||
@@ -23,6 +24,11 @@ const RECAPTCHA_SITE_KEY =
 
 export default function ContactPage() {
   const { toast } = useToast();
+  const { settings } = useSettings();
+  // Contact cards prefer the live, admin-managed values but stay usable if the
+  // settings query is unavailable (e.g. during SSR-to-CSR hydration gaps).
+  const supportEmail = settings?.supportEmail?.trim() || SUPPORT_EMAIL;
+  const supportPhone = settings?.supportPhone?.trim() || DEFAULT_SUPPORT_PHONE;
   const recaptchaRef = useRef<ElementRef<typeof ReCAPTCHA>>(null);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -135,10 +141,10 @@ export default function ContactPage() {
                   <div>
                     <p className="font-medium text-foreground">Email</p>
                     <a
-                      href={`mailto:${SUPPORT_EMAIL}`}
+                      href={`mailto:${supportEmail}`}
                       className="text-primary underline-offset-4 hover:underline break-all"
                     >
-                      {SUPPORT_EMAIL}
+                      {supportEmail}
                     </a>
                   </div>
                 </li>
@@ -146,8 +152,11 @@ export default function ContactPage() {
                   <Phone className="mt-0.5 h-5 w-5 shrink-0 text-primary" aria-hidden />
                   <div>
                     <p className="font-medium text-foreground">Phone</p>
-                    <a href={`tel:${SUPPORT_PHONE.replace(/\s/g, "")}`} className="text-foreground hover:text-primary">
-                      {SUPPORT_PHONE}
+                    <a
+                      href={`tel:${supportPhone.replace(/\s+/g, "")}`}
+                      className="text-foreground hover:text-primary"
+                    >
+                      {supportPhone}
                     </a>
                   </div>
                 </li>
@@ -240,7 +249,7 @@ export default function ContactPage() {
                   {submitting ? "Sending…" : "Send message"}
                 </Button>
                 <p className="text-xs text-muted-foreground">
-                  Your message is sent securely to our team. You can still reach us directly at {SUPPORT_EMAIL}. This site
+                  Your message is sent securely to our team. You can still reach us directly at {supportEmail}. This site
                   is protected by reCAPTCHA and the Google{" "}
                   <a
                     href="https://policies.google.com/privacy"

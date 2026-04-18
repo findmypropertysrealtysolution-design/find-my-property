@@ -8,5 +8,22 @@ export type { Settings } from "@/schema/setting";
 export type { Agent } from "@/schema/agent";
 export type { Lead, LeadStatus } from "@/schema/lead";
 export type { AdminDashboardStats } from "@/schema/admin-dashboard-stats";
+export type {
+  ServiceType,
+  ServiceRequestStatus,
+  PreferredSlot,
+  Stop,
+  TripEstimate,
+  TripEstimateResponse,
+  PackersMoversDetails,
+  PaintingCleaningDetails,
+  ServiceRequestDTO,
+  PackersMoversInput,
+  PaintingCleaningInput,
+  AdminListServiceRequestsQuery,
+  AdminListServiceRequestsResponse,
+  AdminUpdateServiceRequestInput,
+  ServiceRequestStats,
+} from "@/end-points/service-requests";
 
 export { api, type Api } from "@/end-points";

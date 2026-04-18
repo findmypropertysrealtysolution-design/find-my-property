@@ -7,6 +7,10 @@ import {
   Users,
   BarChart3,
   CheckSquare,
+  ClipboardList,
+  Sparkles,
+  Activity,
+  Settings as SettingsIcon,
   type LucideIcon,
 } from "lucide-react";
 import type { UserRole } from "@/contexts/auth-context";
@@ -22,6 +26,7 @@ const tenantNav: NavItem[] = [
   { title: "Overview", url: "/dashboard", icon: LayoutDashboard },
   { title: "My Listings", url: "/listings", icon: Building2 },
   { title: "Browse", url: "/browse", icon: Search },
+  { title: "My Requests", url: "/my-requests", icon: ClipboardList },
   { title: "Profile", url: "/profile", icon: UserCircle },
 ];
 
@@ -30,6 +35,7 @@ const agentNav: NavItem[] = [
   { title: "My Listings", url: "/listings", icon: Building2 },
   { title: "Browse", url: "/browse", icon: Search },
   { title: "Leads", url: "/leads", icon: Users },
+  { title: "My Requests", url: "/my-requests", icon: ClipboardList },
   { title: "Reports", url: "/reports", icon: BarChart3 },
   { title: "Profile", url: "/profile", icon: UserCircle },
 ];
@@ -38,9 +44,12 @@ const adminNav: NavItem[] = [
   { title: "Overview", url: "/dashboard", icon: LayoutDashboard },
   { title: "Property Approval", url: "/approvals", icon: CheckSquare },
   { title: "Agent Management", url: "/agents", icon: Users },
+  { title: "Service Requests", url: "/admin/service-requests", icon: Sparkles },
+  { title: "Activity Log", url: "/admin/activity", icon: Activity },
   { title: "Browse", url: "/browse", icon: Search },
   { title: "My Listings", url: "/listings", icon: Building2 },
   { title: "All properties", url: "/properties", icon: LayoutList },
+  { title: "Settings", url: "/admin/settings", icon: SettingsIcon },
   { title: "Profile", url: "/profile", icon: UserCircle },
 ];
 

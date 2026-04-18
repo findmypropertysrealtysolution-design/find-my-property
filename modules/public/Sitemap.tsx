@@ -3,7 +3,7 @@
 import Link from "next/link";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
-import { Building2, Users, UserCircle, LayoutDashboard, FileText } from "lucide-react";
+import { Building2, Users, UserCircle, LayoutDashboard, FileText, Sparkles } from "lucide-react";
 
 const sections = [
   {
@@ -15,6 +15,13 @@ const sections = [
       { href: "/browse", label: "Browse listings" },
       { href: "/agents", label: "Agents" },
       { href: "/owner", label: "For Owners" },
+    ],
+  },
+  {
+    title: "Services",
+    links: [
+      { href: "/packers-movers", label: "Packers & Movers" },
+      { href: "/painting-cleaning", label: "Painting & Cleaning" },
     ],
   },
   {
@@ -55,6 +62,7 @@ const sections = [
 
 const iconBySection: Record<string, React.ElementType> = {
   Main: Building2,
+  Services: Sparkles,
   Account: UserCircle,
   Tenant: LayoutDashboard,
   Agent: Users,
