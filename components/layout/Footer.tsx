@@ -16,7 +16,10 @@ const Footer = () => {
   const email = settings?.supportEmail?.trim() || SUPPORT_EMAIL;
   const phone = settings?.supportPhone?.trim() || null;
   const logoUrl = settings?.primaryLogoUrl?.trim() || null;
-  const year = new Date().getFullYear();
+  // Hardcoded: Next 16's prerender checker rejects `new Date()` in Client
+  // Components (non-deterministic at build time). Copyright years don't need
+  // to be live — bump this annually.
+  const year = 2026;
 
   return (
     <footer className="bg-card border-t border-border">
