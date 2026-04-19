@@ -20,12 +20,14 @@ import { UserCircle, Mail, Phone, Shield, Pencil, Loader2, Camera, Trash2 } from
 import type { UserRole } from "@/contexts/auth-context";
 import { normalizePhone } from "@/helpers";
 import { CldUploadWidget, type CloudinaryUploadWidgetInfo } from "next-cloudinary";
+import { useRouter } from "next/navigation";
 
 const AVATAR_MAX_BYTES = 5 * 1024 * 1024;
 
 const Profile = () => {
   const { user, profile, updateUser, updateProfileLocal, updateProfile, requestPhoneOtp } = useAuth();
   const { toast } = useToast();
+  const router = useRouter();
   const [name, setName] = useState(user?.name ?? "");
 
   const [phoneDialogOpen, setPhoneDialogOpen] = useState(false);
@@ -337,8 +339,9 @@ const Profile = () => {
                     const val = e.target.value as UserRole;
                     const res = await updateProfile({ role: val });
                     if (res.success) {
-                      toast({ title: "Role updated", description: `You are now a ${val}. Re-routing...` });
-                      window.location.href = `/dashboard`;
+                      toast({ title: "Role updated", description: `You are now a ${val}. logging out...` });
+                      router.push("/");
+                      router.refresh();
                     } else {
                       toast({ title: "Failed", description: res.error || "Unknown error", variant: "destructive" });
                     }
