@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { SITE_NAME } from "@/lib/branding";
+import { getBranding } from "@/lib/branding/server";
 import { absoluteUrl, toAbsoluteImageUrl } from "@/lib/seo/site";
 import { getCachedPropertyById } from "../server/cached-properties";
 import { parsePropertyIdFromSlugParam } from "../property-slug";
@@ -12,13 +12,16 @@ function clip(text: string, max: number) {
 
 export async function generatePropertyPageMetadata(slug: string): Promise<Metadata> {
   const id = parsePropertyIdFromSlugParam(slug);
-  const row = await getCachedPropertyById(id!);
+  const [row, { siteName }] = await Promise.all([
+    getCachedPropertyById(id!),
+    getBranding(),
+  ]);
   const canonicalPath = `/property/${slug}`;
 
   if (!row) {
     return {
       title: "Listing not found",
-      description: `The requested property may have been removed. Browse more listings on ${SITE_NAME}.`,
+      description: `The requested property may have been removed. Browse more listings on ${siteName}.`,
       robots: { index: false, follow: true },
       alternates: { canonical: absoluteUrl(canonicalPath) },
     };
@@ -47,7 +50,7 @@ export async function generatePropertyPageMetadata(slug: string): Promise<Metada
       url: canonical,
       type: "website",
       locale: "en_IN",
-      siteName: SITE_NAME,
+      siteName,
       images: ogImage ? [{ url: ogImage, width: 1200, height: 630, alt: row.title }] : undefined,
     },
     twitter: {

@@ -56,6 +56,10 @@
     --popover-foreground: oklch(0.145 0 0);
     --primary: oklch(0.508 0.118 165.612);
     --primary-foreground: oklch(0.979 0.021 166.113);
+    /* Hex mirrors of `--primary` for surfaces (Google Maps SVG markers, canvas, etc.)
+       that can't parse `oklch()`. Keep visually in sync with `--primary` above. */
+    --map-marker: #1f8773;
+    --map-marker-foreground: #ffffff;
     --secondary: oklch(0.967 0.001 286.375);
     --secondary-foreground: oklch(0.21 0.006 285.885);
     --muted: oklch(0.97 0 0);
@@ -92,6 +96,8 @@
     --popover-foreground: oklch(0.985 0 0);
     --primary: oklch(0.432 0.095 166.913);
     --primary-foreground: oklch(0.979 0.021 166.113);
+    --map-marker: #1c705e;
+    --map-marker-foreground: #ffffff;
     --secondary: oklch(0.274 0.006 286.033);
     --secondary-foreground: oklch(0.985 0 0);
     --muted: oklch(0.269 0 0);

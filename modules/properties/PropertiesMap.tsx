@@ -7,6 +7,7 @@ import { ZoomIn, ZoomOut, Maximize2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { getGoogleMapsLoaderOptions } from "@/lib/google-maps-loader";
 import { getMarkerPosition, MAP_DEFAULT_CENTER } from "@/lib/property-map-coords";
+import { getThemeMarkerSymbol } from "@/lib/map-marker";
 import type { Property } from "@/components/property/PropertyCard";
 
 const DEFAULT_ZOOM = 11;
@@ -186,10 +187,11 @@ const PropertiesMap = ({
               <Marker
                 key={p.id}
                 position={{ lat, lng }}
+                icon={getThemeMarkerSymbol({ scale: 1.3, withLabel: true })}
                 label={{
                   text: label.length > 8 ? label.slice(0, 7) + "…" : label,
                   color: "#fff",
-                  fontSize: "11px",
+                  fontSize: "10px",
                   fontWeight: "bold",
                 }}
                 title={approximate ? `${p.title} (approximate)` : p.title}

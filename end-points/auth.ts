@@ -7,6 +7,7 @@ interface BackendAuthUser {
   email?: string | null;
   pendingEmail?: string | null;
   phone?: string | null;
+  avatarUrl?: string | null;
   role?: string;
   defaultRole?: string | null;
   isEmailVerified?: boolean;
@@ -42,6 +43,7 @@ function mapAuthUser(user: BackendAuthUser): AuthUser {
     email: user.email ?? null,
     pendingEmail: user.pendingEmail ?? null,
     phone: user.phone ?? null,
+    avatarUrl: user.avatarUrl ?? null,
     role: normalizeRole(user.role),
     defaultRole:
       user.defaultRole != null && String(user.defaultRole).trim() !== ""
@@ -108,6 +110,8 @@ export const auth = {
     phone?: string;
     /** OTP sent to `phone` via `requestPhoneOtp` — required when updating phone while logged in. */
     otp?: string;
+    /** Pass `null` to clear the existing avatar. */
+    avatarUrl?: string | null;
     locationAddress?: string;
     locationCity?: string;
     locationState?: string;

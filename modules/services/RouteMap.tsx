@@ -8,6 +8,7 @@ import {
   useJsApiLoader,
 } from "@react-google-maps/api";
 import { getGoogleMapsServicesLoaderOptions } from "@/lib/google-maps-loader";
+import { getThemeMarkerSymbol } from "@/lib/map-marker";
 import { cn } from "@/lib/utils";
 import type { Stop } from "@/lib/api";
 
@@ -173,17 +174,20 @@ export default function RouteMap({
             {pickup ? (
               <Marker
                 position={{ lat: pickup.lat, lng: pickup.lng }}
-                label={{ text: "P", color: "white", fontSize: "12px" }}
+                icon={getThemeMarkerSymbol({ scale: 1.3, withLabel: true })}
+                label={{ text: "P", color: "white", fontSize: "11px", fontWeight: "bold" }}
               />
             ) : null}
             {(drops ?? []).map((d, i) => (
               <Marker
                 key={i}
                 position={{ lat: d.lat, lng: d.lng }}
+                icon={getThemeMarkerSymbol({ scale: 1.3, withLabel: true })}
                 label={{
                   text: String(i + 1),
                   color: "white",
-                  fontSize: "12px",
+                  fontSize: "11px",
+                  fontWeight: "bold",
                 }}
               />
             ))}

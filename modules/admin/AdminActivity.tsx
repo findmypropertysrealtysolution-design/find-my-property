@@ -42,6 +42,7 @@ import {
 } from "@/hooks/use-system-logs";
 import {
   CATEGORY_LABELS,
+  HIDE_ERRORS_IN_UI,
   formatLogEvent,
   groupByDay,
   type ActivityCategory,
@@ -54,28 +55,38 @@ const PAGE_SIZE = 30;
 
 type CategoryFilter = "all" | ActivityCategory;
 
+// Error rows are hidden from the UI in production (the backend still records
+// them — this only controls display). Build the pill list + URL parser from a
+// single source so a stale `?cat=error` link silently coerces to "all".
+const VISIBLE_CATEGORIES = (
+  HIDE_ERRORS_IN_UI
+    ? (["service", "listing", "lead", "user", "auth", "system"] as const)
+    : (["service", "listing", "lead", "user", "auth", "system", "error"] as const)
+) satisfies ReadonlyArray<ActivityCategory>;
+
+const CATEGORY_ICON: Record<ActivityCategory, LucideIcon> = {
+  service: Sparkles,
+  listing: Building2,
+  lead: MessageSquareText,
+  user: CircleUser,
+  auth: ShieldCheck,
+  system: Settings2,
+  error: AlertCircle,
+};
+
 const CATEGORY_FILTERS: Array<{ key: CategoryFilter; label: string; icon: LucideIcon }> = [
   { key: "all", label: "All activity", icon: Activity },
-  { key: "service", label: CATEGORY_LABELS.service, icon: Sparkles },
-  { key: "listing", label: CATEGORY_LABELS.listing, icon: Building2 },
-  { key: "lead", label: CATEGORY_LABELS.lead, icon: MessageSquareText },
-  { key: "user", label: CATEGORY_LABELS.user, icon: CircleUser },
-  { key: "auth", label: CATEGORY_LABELS.auth, icon: ShieldCheck },
-  { key: "system", label: CATEGORY_LABELS.system, icon: Settings2 },
-  { key: "error", label: CATEGORY_LABELS.error, icon: AlertCircle },
+  ...VISIBLE_CATEGORIES.map((key) => ({
+    key,
+    label: CATEGORY_LABELS[key],
+    icon: CATEGORY_ICON[key],
+  })),
 ];
 
 const filterParsers = {
-  cat: parseAsStringLiteral([
+  cat: parseAsStringLiteral(["all", ...VISIBLE_CATEGORIES] as const).withDefault(
     "all",
-    "service",
-    "listing",
-    "lead",
-    "user",
-    "auth",
-    "system",
-    "error",
-  ] as const).withDefault("all"),
+  ),
   q: parseAsString.withDefault(""),
   page: parseAsInteger.withDefault(1),
 };
@@ -102,10 +113,14 @@ export default function AdminActivity() {
 
   const clearMutation = useClearSystemLogs();
 
-  const allEvents = useMemo(
-    () => (rawLogs ?? []).map(formatLogEvent),
-    [rawLogs],
-  );
+  const allEvents = useMemo(() => {
+    const mapped = (rawLogs ?? []).map(formatLogEvent);
+    // Drop error rows up-front in production so counts, search, and pagination
+    // all stay consistent with what the user can see.
+    return HIDE_ERRORS_IN_UI
+      ? mapped.filter((ev) => ev.category !== "error")
+      : mapped;
+  }, [rawLogs]);
   const routineCount = useMemo(
     () => allEvents.filter((ev) => ev.chatty).length,
     [allEvents],
@@ -389,8 +404,9 @@ export default function AdminActivity() {
           <DialogHeader>
             <DialogTitle>Clear activity log</DialogTitle>
             <DialogDescription>
-              Remove entries from the database. This cannot be undone. Errors
-              and warnings are kept by default — choose a scope below.
+              {HIDE_ERRORS_IN_UI
+                ? "Remove entries from the database. This cannot be undone. Choose a scope below."
+                : "Remove entries from the database. This cannot be undone. Errors and warnings are kept by default — choose a scope below."}
             </DialogDescription>
           </DialogHeader>
 

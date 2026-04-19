@@ -59,13 +59,24 @@ const AdminSettings = () => {
     setDraft((prev) => ({ ...prev, [key]: value }));
 
   const handleSave = async () => {
-    // Normalize empty strings on optional text fields to null so the backend
-    // treats "clear" semantics consistently across save/reload cycles.
+    // The GET /settings response includes server-managed fields (`id`,
+    // `updatedAt`) that the PATCH DTO rejects via `forbidNonWhitelisted`.
+    // Strip them — and any future read-only fields — before sending, then
+    // normalize empty strings on optional text fields to null so "clear"
+    // semantics round-trip cleanly through save/reload.
+    const {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      id: _id,
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      updatedAt: _updatedAt,
+      ...writable
+    } = draft as Partial<Settings> & { id?: unknown; updatedAt?: unknown };
+
     const payload: Partial<Settings> = {
-      ...draft,
-      supportPhone: draft.supportPhone?.trim() || null,
-      primaryLogoUrl: draft.primaryLogoUrl || null,
-      faviconUrl: draft.faviconUrl || null,
+      ...writable,
+      supportPhone: writable.supportPhone?.trim() || null,
+      primaryLogoUrl: writable.primaryLogoUrl || null,
+      faviconUrl: writable.faviconUrl || null,
     };
     await updateSettings(payload);
   };

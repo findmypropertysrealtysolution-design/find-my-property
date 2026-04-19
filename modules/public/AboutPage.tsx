@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import { ArrowLeft, CheckCircle2, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { SITE_NAME } from "@/lib/branding";
+import { useSettings } from "@/contexts/settings-context";
 
 const milestones = [
   { year: "2024", text: "Platform launched with a focus on verified listings and direct contact." },
@@ -18,7 +19,15 @@ const principles = [
   "No paywall just to ask a question — sign-in gates only where they protect users.",
 ];
 
-export default function AboutPage() {
+type AboutPageProps = {
+  /** SSR-resolved branding used as the source of truth on first paint. */
+  siteName?: string;
+};
+
+export default function AboutPage({ siteName: ssrSiteName }: AboutPageProps = {}) {
+  const { settings } = useSettings();
+  const siteName =
+    settings?.siteName?.trim() || ssrSiteName?.trim() || SITE_NAME;
   return (
     <main className="pb-20 pt-24">
       <div className="container mx-auto max-w-3xl px-4">
@@ -37,7 +46,7 @@ export default function AboutPage() {
         >
           <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-border bg-muted/50 px-3 py-1 text-xs font-medium text-muted-foreground">
             <Sparkles className="h-3.5 w-3.5 text-primary" aria-hidden />
-            About {SITE_NAME}
+            About {siteName}
           </div>
           <h1 className="font-heading text-4xl font-bold tracking-tight text-foreground md:text-5xl">
             Property search that respects your time

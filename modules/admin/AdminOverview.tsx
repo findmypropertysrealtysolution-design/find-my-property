@@ -9,7 +9,7 @@ import { useAdminDashboardStats } from "@/hooks/use-admin-dashboard-stats";
 import type { AdminDashboardStats, DashboardStatBlock } from "@/schema/admin-dashboard-stats";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ServiceRequestsOverviewTiles } from "@/modules/admin/ServiceRequestsAdmin";
-import { formatLogEvent } from "@/lib/activity-log";
+import { HIDE_ERRORS_IN_UI, formatLogEvent } from "@/lib/activity-log";
 import { ActivityItem } from "@/components/admin/ActivityItem";
 
 const numberFmt = new Intl.NumberFormat("en-IN", { maximumFractionDigits: 0 });
@@ -99,11 +99,14 @@ const AdminOverview = () => {
   const { data: stats, isLoading: statsLoading, isError: statsError } = useAdminDashboardStats();
 
   // Hide chatty events (e.g. silent token refresh) from the overview panel.
+  // In production, also drop error rows so internal failures don't leak into
+  // the dashboard preview (matches the Activity Log page behavior).
   const events = useMemo(
     () =>
       (logs ?? [])
         .map(formatLogEvent)
         .filter((ev) => !ev.chatty)
+        .filter((ev) => !HIDE_ERRORS_IN_UI || ev.category !== "error")
         .slice(0, 8),
     [logs],
   );

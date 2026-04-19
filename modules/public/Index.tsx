@@ -27,6 +27,7 @@ import {
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import { SITE_NAME } from "@/lib/branding"
+import { useSettings } from "@/contexts/settings-context"
 import { buildPropertyPath } from "@/lib/property-slug"
 import { LandingAboutSection } from "@/modules/public/LandingAboutSection"
 import { buildPopularCitiesFromProperties } from "@/lib/property-location-options"
@@ -79,10 +80,10 @@ const howItWorks = [
   },
 ]
 
-const testimonials = [
+const buildTestimonials = (siteName: string) => [
   {
     quote:
-      `Found my 3BHK in Whitefield in 3 days. ${SITE_NAME}, no hassle. Saved almost ₹50,000!`,
+      `Found my 3BHK in Whitefield in 3 days. ${siteName}, no hassle. Saved almost ₹50,000!`,
     author: "Priya S.",
     role: "Tenant, Bangalore",
     rating: 5,
@@ -103,9 +104,20 @@ const testimonials = [
   },
 ]
 
-const Index = () => {
+type IndexProps = {
+  /** SSR-resolved branding used as the source of truth on first paint. */
+  siteName?: string
+}
+
+const Index = ({ siteName: ssrSiteName }: IndexProps = {}) => {
   const { isAuthenticated, isAuthReady } = useAuth()
   const { data, isLoading } = useProperties()
+  const { settings } = useSettings()
+  // Prefer the live admin value once the client query resolves, falling back to
+  // the SSR-injected value (no flash) and finally the compile-time default.
+  const siteName =
+    settings?.siteName?.trim() || ssrSiteName?.trim() || SITE_NAME
+  const testimonials = useMemo(() => buildTestimonials(siteName), [siteName])
   const allProperties = data ?? []
   const featuredProperties = allProperties.slice(0, 4)
   const popularCities = useMemo(
@@ -136,7 +148,7 @@ const Index = () => {
         <div className="container mx-auto px-4">
           <div className="mb-14 text-center">
             <h2 className="mb-3 font-heading text-3xl font-bold text-foreground md:text-4xl">
-              Why Choose {SITE_NAME}?
+              Why Choose {siteName}?
             </h2>
             <p className="mx-auto max-w-lg wrap-break-word text-muted-foreground">
               A simpler way to search and list — clear information, direct contact, less friction.
@@ -354,7 +366,7 @@ const Index = () => {
               Popular Cities
             </h2>
             <p className="text-sm text-muted-foreground">
-              Cities ranked by how many listings we currently have on {SITE_NAME}
+              Cities ranked by how many listings we currently have on {siteName}
             </p>
           </div>
           {isLoading ? (
@@ -399,7 +411,7 @@ const Index = () => {
               What Our Users Say
             </h2>
             <p className="mx-auto max-w-lg text-muted-foreground">
-              Join people who found their next home or tenant through {SITE_NAME}.
+              Join people who found their next home or tenant through {siteName}.
             </p>
           </div>
           <div className="mx-auto grid max-w-5xl grid-cols-1 gap-8 md:grid-cols-3">
@@ -461,7 +473,7 @@ const Index = () => {
               Are You a Property Owner?
             </h2>
             <p className="mx-auto mb-8 max-w-lg text-primary-foreground/85">
-              List your property and reach serious tenants or buyers — simple, transparent, built for {SITE_NAME} users.
+              List your property and reach serious tenants or buyers — simple, transparent, built for {siteName} users.
             </p>
             <Button size="lg" variant="secondary" asChild>
               <Link href="/owner">

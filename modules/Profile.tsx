@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/auth-context";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -16,9 +16,12 @@ import {
 } from "@/components/ui/dialog";
 import { InputOTP, InputOTPGroup, InputOTPSeparator, InputOTPSlot } from "@/components/ui/input-otp";
 import { useToast } from "@/hooks/use-toast";
-import { UserCircle, Mail, Phone, Shield, Pencil, Loader2 } from "lucide-react";
+import { UserCircle, Mail, Phone, Shield, Pencil, Loader2, Camera, Trash2 } from "lucide-react";
 import type { UserRole } from "@/contexts/auth-context";
 import { normalizePhone } from "@/helpers";
+import { CldUploadWidget, type CloudinaryUploadWidgetInfo } from "next-cloudinary";
+
+const AVATAR_MAX_BYTES = 5 * 1024 * 1024;
 
 const Profile = () => {
   const { user, profile, updateUser, updateProfileLocal, updateProfile, requestPhoneOtp } = useAuth();
@@ -31,6 +34,9 @@ const Profile = () => {
   const [otp, setOtp] = useState("");
   const [sendingOtp, setSendingOtp] = useState(false);
   const [verifyingOtp, setVerifyingOtp] = useState(false);
+
+  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
+  const cloudinaryPreset = process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET;
 
   useEffect(() => {
     setName(user?.name ?? "");
@@ -131,30 +137,166 @@ const Profile = () => {
     });
   };
 
+  const persistAvatar = async (nextUrl: string | null) => {
+    const res = await updateProfile({ avatarUrl: nextUrl });
+    if (!res.success) {
+      toast({
+        title: "Couldn't save photo",
+        description: res.error || "Please try again.",
+        variant: "destructive",
+      });
+      return false;
+    }
+    toast({
+      title: nextUrl ? "Photo updated" : "Photo removed",
+      description: nextUrl ? "Your new profile picture is live." : "Your profile picture has been cleared.",
+    });
+    return true;
+  };
+
+  const handleCloudinarySuccess = async (info: CloudinaryUploadWidgetInfo | undefined) => {
+    const url = info?.secure_url;
+    if (!url) return;
+    setIsUploadingAvatar(true);
+    try {
+      await persistAvatar(url);
+    } finally {
+      setIsUploadingAvatar(false);
+    }
+  };
+
+  const handleRemoveAvatar = async () => {
+    if (!user?.avatarUrl) return;
+    setIsUploadingAvatar(true);
+    try {
+      await persistAvatar(null);
+    } finally {
+      setIsUploadingAvatar(false);
+    }
+  };
+
   if (!user) return null;
 
+  const initials = user.name.split(" ").map((n) => n[0]).join("").slice(0, 2) || "U";
+  const avatarUrl = user.avatarUrl ?? null;
+
   return (
-    <div className="max-w-xl space-y-6">
-      <div>
+    <div className="mx-auto w-full max-w-xl space-y-6">
+      <div className="text-center sm:text-left">
         <h2 className="font-heading text-xl font-bold text-foreground mb-1">My Profile</h2>
         <p className="text-sm text-muted-foreground">Manage your account details</p>
       </div>
 
       <form onSubmit={handleSave} className="space-y-6">
         <div className="bg-card rounded-2xl border border-border p-6 space-y-6">
-          <div className="flex items-center gap-4 pb-6 border-b border-border">
-            <Avatar className="h-16 w-16 shrink-0">
-              <AvatarFallback className="bg-primary/10 text-primary text-lg font-bold">
-                {user.name.split(" ").map((n) => n[0]).join("") || "U"}
-              </AvatarFallback>
-            </Avatar>
-            <div className="min-w-0">
-              <h3 className="font-heading font-semibold text-foreground truncate">{user.name}</h3>
-              <p className="text-sm text-muted-foreground truncate">{user.email}</p>
-              <span className="inline-block mt-1 text-xs text-muted-foreground capitalize bg-muted px-2 py-0.5 rounded">
-                {user.role}
-              </span>
-            </div>
+          <div className="flex flex-col items-center gap-4 pb-6 border-b border-border text-center sm:flex-row sm:items-center sm:gap-5 sm:text-left">
+            <CldUploadWidget
+              uploadPreset={cloudinaryPreset}
+              options={{
+                multiple: false,
+                cropping: true,
+                croppingAspectRatio: 1,
+                showSkipCropButton: false,
+                clientAllowedFormats: ["image"],
+                maxFileSize: AVATAR_MAX_BYTES,
+                sources: ["local", "camera", "url"],
+                folder: "avatars",
+              }}
+              onSuccess={(result) => {
+                if (result.event !== "success") return;
+                const info = result.info;
+                if (info && typeof info !== "string") {
+                  void handleCloudinarySuccess(info as CloudinaryUploadWidgetInfo);
+                }
+              }}
+              onError={(error) => {
+                toast({
+                  title: "Upload failed",
+                  description: typeof error === "string" ? error : "Please try again.",
+                  variant: "destructive",
+                });
+                setIsUploadingAvatar(false);
+              }}
+            >
+              {({ open }) => {
+                const openWidget = () => {
+                  if (!cloudinaryPreset) {
+                    toast({
+                      title: "Uploads unavailable",
+                      description: "Cloudinary is not configured. Set NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET.",
+                      variant: "destructive",
+                    });
+                    return;
+                  }
+                  open();
+                };
+
+                return (
+                  <>
+                    <div className="relative">
+                      <Avatar className="h-24 w-24 shrink-0 ring-2 ring-border">
+                        {avatarUrl ? (
+                          <AvatarImage src={avatarUrl} alt={user.name} className="object-cover" />
+                        ) : null}
+                        <AvatarFallback className="bg-primary/10 text-primary text-xl font-bold">
+                          {initials}
+                        </AvatarFallback>
+                      </Avatar>
+
+                      <button
+                        type="button"
+                        onClick={openWidget}
+                        disabled={isUploadingAvatar}
+                        aria-label={avatarUrl ? "Change profile photo" : "Upload profile photo"}
+                        className="absolute -bottom-1 -right-1 inline-flex h-8 w-8 items-center justify-center rounded-full border-2 border-background bg-primary text-primary-foreground shadow-md transition hover:scale-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-70"
+                      >
+                        {isUploadingAvatar ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <Camera className="h-4 w-4" />
+                        )}
+                      </button>
+                    </div>
+
+                    <div className="min-w-0 flex-1">
+                      <h3 className="font-heading font-semibold text-foreground truncate">{user.name}</h3>
+                      <p className="text-sm text-muted-foreground truncate">{user.email}</p>
+                      <span className="inline-block mt-1 text-xs text-muted-foreground capitalize bg-muted px-2 py-0.5 rounded">
+                        {user.role}
+                      </span>
+                      <div className="mt-3 flex flex-wrap items-center justify-center gap-2 sm:justify-start">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={openWidget}
+                          disabled={isUploadingAvatar}
+                        >
+                          <Camera className="mr-2 h-3.5 w-3.5" />
+                          {avatarUrl ? "Change photo" : "Upload photo"}
+                        </Button>
+                        {avatarUrl ? (
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            className="text-destructive hover:bg-destructive/10 hover:text-destructive"
+                            onClick={() => void handleRemoveAvatar()}
+                            disabled={isUploadingAvatar}
+                          >
+                            <Trash2 className="mr-2 h-3.5 w-3.5" />
+                            Remove
+                          </Button>
+                        ) : null}
+                      </div>
+                      <p className="mt-2 text-[11px] text-muted-foreground">
+                        JPG, PNG or WebP up to 5 MB. Stored on Cloudinary.
+                      </p>
+                    </div>
+                  </>
+                );
+              }}
+            </CldUploadWidget>
           </div>
 
           <div className="grid gap-4">

@@ -11,6 +11,7 @@ import { useAuth, type User } from "@/contexts/auth-context";
 import { useToast } from "@/hooks/use-toast";
 import { buildLoginAndRegisterHrefs, getPostAuthRoute, parseSafeReturnPath } from "@/lib/auth-redirect";
 import { SITE_NAME } from "@/lib/branding";
+import { useSettings } from "@/contexts/settings-context";
 
 const normalizePhone = (value: string) => {
   const trimmed = value.trim();
@@ -33,6 +34,8 @@ const Register = () => {
   const searchParams = useSearchParams();
   const { loginHref } = buildLoginAndRegisterHrefs(pathname, searchParams);
   const { toast } = useToast();
+  const { settings } = useSettings();
+  const siteName = settings?.siteName?.trim() || SITE_NAME;
 
   const handleSendOtp = async () => {
     if (!name.trim()) {
@@ -107,7 +110,7 @@ const Register = () => {
         >
           <div className="bg-card/90 backdrop-blur-md rounded-2xl p-6 shadow-lg">
             <p className="text-foreground text-sm leading-relaxed mb-4">
-              &quot;{SITE_NAME} helped us find our dream home in Bangalore. All we just did was
+              &quot;{siteName} helped us find our dream home in Bangalore. All we just did was
               search their listings and we found it in a few minutes!&quot;
             </p>
             <div>

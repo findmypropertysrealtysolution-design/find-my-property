@@ -3,9 +3,20 @@
 import Link from "next/link";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
-import { Building2, Users, UserCircle, LayoutDashboard, FileText, Sparkles } from "lucide-react";
+import { Building2, Users, UserCircle, LayoutDashboard, FileText, Sparkles, Shield } from "lucide-react";
+import { tenantNav, agentNav, adminNav, type NavItem } from "@/config/roleNav";
 
-const sections = [
+interface Section {
+  title: string;
+  links: { href: string; label: string }[];
+}
+
+/** Map the canonical sidebar nav (role-aware source of truth) into sitemap rows
+ *  so we don't drift when routes are added or renamed in `config/roleNav.tsx`. */
+const navToLinks = (items: NavItem[]) =>
+  items.map((i) => ({ href: i.url, label: i.title }));
+
+const sections: Section[] = [
   {
     title: "Main",
     links: [
@@ -13,8 +24,6 @@ const sections = [
       { href: "/about", label: "About" },
       { href: "/contact", label: "Contact" },
       { href: "/browse", label: "Browse listings" },
-      { href: "/agents", label: "Agents" },
-      { href: "/owner", label: "For Owners" },
     ],
   },
   {
@@ -31,33 +40,9 @@ const sections = [
       { href: "/register", label: "Sign Up" },
     ],
   },
-  {
-    title: "Tenant",
-    links: [
-      { href: "/dashboard", label: "Dashboard" },
-      { href: "/listings", label: "My Listings" },
-      { href: "/profile", label: "Profile" },
-    ],
-  },
-  {
-    title: "Agent",
-    links: [
-      { href: "/dashboard", label: "Dashboard" },
-      { href: "/listings", label: "My Listings" },
-      { href: "/leads", label: "Leads" },
-      { href: "/reports", label: "Reports" },
-      { href: "/profile", label: "Profile" },
-    ],
-  },
-  {
-    title: "Admin",
-    links: [
-      { href: "/dashboard", label: "Dashboard" },
-      { href: "/approvals", label: "Property Approval" },
-      { href: "/agents", label: "Agent Management" },
-      { href: "/properties", label: "All properties" },
-    ],
-  },
+  { title: "Tenant", links: navToLinks(tenantNav) },
+  { title: "Agent", links: navToLinks(agentNav) },
+  { title: "Admin", links: navToLinks(adminNav) },
 ];
 
 const iconBySection: Record<string, React.ElementType> = {
@@ -66,14 +51,13 @@ const iconBySection: Record<string, React.ElementType> = {
   Account: UserCircle,
   Tenant: LayoutDashboard,
   Agent: Users,
-  Company: Building2,
-  Admin: FileText,
+  Admin: Shield,
 };
 
 const Sitemap = () => {
   return (
     <div className="min-h-screen bg-background overflow-x-hidden">
-      <Navbar />
+      {/* <Navbar /> */}
       <main className="pt-24 pb-20">
         <div className="container mx-auto px-4">
           <div className="max-w-4xl mx-auto">
@@ -135,7 +119,7 @@ const Sitemap = () => {
           </div>
         </div>
       </main>
-      <Footer />
+      {/* <Footer /> */}
     </div>
   );
 };

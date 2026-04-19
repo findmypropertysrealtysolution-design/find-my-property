@@ -7,12 +7,15 @@ import { Button } from "@/components/ui/button";
 import { CheckCircle2, XCircle, Loader2, Building2 } from "lucide-react";
 import { motion } from "framer-motion";
 import { SITE_NAME } from "@/lib/branding";
+import { useSettings } from "@/contexts/settings-context";
 
 function VerifyAgentContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const token = searchParams.get("token");
-  
+  const { settings } = useSettings();
+  const siteName = settings?.siteName?.trim() || SITE_NAME;
+
   const [status, setStatus] = useState<"loading" | "success" | "error">("loading");
   const [message, setMessage] = useState("");
 
@@ -52,7 +55,7 @@ function VerifyAgentContent() {
 
         <div className="space-y-2">
           <h1 className="text-2xl font-bold text-foreground">Agent Verification</h1>
-          <p className="text-muted-foreground text-sm">{SITE_NAME} - Professional Network</p>
+          <p className="text-muted-foreground text-sm">{siteName} - Professional Network</p>
         </div>
 
         <div className="py-8 flex flex-col items-center gap-4">

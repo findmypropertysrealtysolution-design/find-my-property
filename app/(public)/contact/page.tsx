@@ -1,16 +1,20 @@
 import type { Metadata } from "next";
 import ContactPage from "@/modules/public/ContactPage";
-import { SITE_NAME } from "@/lib/branding";
+import { getBranding } from "@/lib/branding/server";
 
-export const metadata: Metadata = {
-  title: "Contact",
-  description: `Get in touch with ${SITE_NAME} — support, partnerships, and product feedback.`,
-  openGraph: {
-    title: `Contact | ${SITE_NAME}`,
-    description: `Contact ${SITE_NAME} by email or phone.`,
-  },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const { siteName } = await getBranding();
+  return {
+    title: "Contact",
+    description: `Get in touch with ${siteName} — support, partnerships, and product feedback.`,
+    openGraph: {
+      title: `Contact | ${siteName}`,
+      description: `Contact ${siteName} by email or phone.`,
+    },
+  };
+}
 
-export default function Page() {
-  return <ContactPage />;
+export default async function Page() {
+  const { siteName } = await getBranding();
+  return <ContactPage siteName={siteName} />;
 }

@@ -6,8 +6,11 @@ import { motion } from "framer-motion";
 import { ArrowRight, HeartHandshake, Target } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { SITE_NAME } from "@/lib/branding";
+import { useSettings } from "@/contexts/settings-context";
 
 export function LandingAboutSection() {
+  const { settings } = useSettings();
+  const siteName = settings?.siteName?.trim() || SITE_NAME;
   return (
     <section className="border-y border-border bg-muted/20 py-20">
       <div className="container mx-auto px-4">
@@ -38,7 +41,7 @@ export function LandingAboutSection() {
               We&apos;re making property search feel human again
             </h2>
             <p className="text-base leading-relaxed text-muted-foreground">
-              {SITE_NAME} started from a simple idea: you should see real listings, talk to real people, and move
+              {siteName} started from a simple idea: you should see real listings, talk to real people, and move
               forward without wading through spam or opaque fees. We combine careful verification with tools that keep
               owners, tenants, and agents on the same page.
             </p>

@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { MapPin, Link2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { getGoogleMapsLoaderOptions } from "@/lib/google-maps-loader";
+import { getThemeMarkerSymbol } from "@/lib/map-marker";
 
 const DEFAULT_CENTER = { lat: 12.9716, lng: 77.5946 }; // Bangalore
 
@@ -233,7 +234,12 @@ const LocationPicker = ({
             clickableIcons: false,
           }}
         >
-          {value && <Marker position={{ lat: value.lat, lng: value.lng }} />}
+          {value && (
+            <Marker
+              position={{ lat: value.lat, lng: value.lng }}
+              icon={getThemeMarkerSymbol({ scale: 1.3 })}
+            />
+          )}
         </GoogleMap>
         <div className="absolute bottom-2 left-2 bg-background/90 backdrop-blur text-xs text-muted-foreground px-2 py-1 rounded flex items-center gap-1">
           <MapPin className="w-3 h-3" />

@@ -12,6 +12,7 @@ import { useAuth, User } from "@/contexts/auth-context";
 import { useToast } from "@/hooks/use-toast";
 import Image from "next/image";
 import { SITE_NAME } from "@/lib/branding";
+import { useSettings } from "@/contexts/settings-context";
 import { buildLoginAndRegisterHrefs, getPostAuthRoute, parseSafeReturnPath } from "@/lib/auth-redirect";
 
 const normalizePhone = (value: string) => {
@@ -34,6 +35,8 @@ const Login = () => {
   const searchParams = useSearchParams();
   const { registerHref } = buildLoginAndRegisterHrefs(pathname, searchParams);
   const { toast } = useToast();
+  const { settings } = useSettings();
+  const siteName = settings?.siteName?.trim() || SITE_NAME;
 
   const handleSendOtp = async (e?: React.SubmitEvent<HTMLFormElement>) => {
       e?.preventDefault();
@@ -120,7 +123,7 @@ const handleVerifyOtp = async (e?: React.SubmitEvent<HTMLFormElement>) => {
         >
           <div className="bg-card/90 backdrop-blur-md rounded-2xl p-6 shadow-lg">
             <p className="text-foreground text-sm leading-relaxed mb-4">
-              &quot;{SITE_NAME} helped us find our dream home in Bangalore. All we just did was
+              &quot;{siteName} helped us find our dream home in Bangalore. All we just did was
               search their listings and we found it in a few minutes!&quot;
             </p>
             <div>
@@ -227,7 +230,7 @@ const handleVerifyOtp = async (e?: React.SubmitEvent<HTMLFormElement>) => {
           </form>
 
           <div className="mt-8 text-center text-sm">
-            <span className="text-muted-foreground">New to {SITE_NAME}? </span>
+            <span className="text-muted-foreground">New to {siteName}? </span>
             <Link href={registerHref} className="text-primary font-semibold hover:underline transition-all">
               Create an account
             </Link>

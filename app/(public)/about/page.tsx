@@ -1,16 +1,20 @@
 import type { Metadata } from "next";
 import AboutPage from "@/modules/public/AboutPage";
-import { SITE_NAME } from "@/lib/branding";
+import { getBranding } from "@/lib/branding/server";
 
-export const metadata: Metadata = {
-  title: "About",
-  description: `Learn about ${SITE_NAME} — verified listings, direct contact, and a product built for renters, owners, and agents.`,
-  openGraph: {
-    title: `About | ${SITE_NAME}`,
-    description: `Learn about ${SITE_NAME} and how we approach property search.`,
-  },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const { siteName } = await getBranding();
+  return {
+    title: "About",
+    description: `Learn about ${siteName} — verified listings, direct contact, and a product built for renters, owners, and agents.`,
+    openGraph: {
+      title: `About | ${siteName}`,
+      description: `Learn about ${siteName} and how we approach property search.`,
+    },
+  };
+}
 
-export default function Page() {
-  return <AboutPage />;
+export default async function Page() {
+  const { siteName } = await getBranding();
+  return <AboutPage siteName={siteName} />;
 }

@@ -7,6 +7,7 @@ import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { SITE_NAME } from "@/lib/branding";
+import { useSettings } from "@/contexts/settings-context";
 import { buildLoginAndRegisterHrefs } from "@/lib/auth-redirect";
 import { Property } from "@/modules/properties/PropertyCard";
 
@@ -34,6 +35,8 @@ function AuthGateModalLinks({ endpoint }: { endpoint: string }) {
 }
 
 const AuthGateModal = ({ open, onClose, endpoint }: AuthGateModalProps) => {
+  const { settings } = useSettings();
+  const siteName = settings?.siteName?.trim() || SITE_NAME;
   return (
     <AnimatePresence>
       {open && (
@@ -57,7 +60,7 @@ const AuthGateModal = ({ open, onClose, endpoint }: AuthGateModalProps) => {
                   <div className="flex h-10 w-10 items-center justify-center rounded-xl hero-gradient">
                     <Building2 className="h-5 w-5 text-primary-foreground" />
                   </div>
-                  <span className="font-heading text-xl font-bold text-foreground">{SITE_NAME}</span>
+                  <span className="font-heading text-xl font-bold text-foreground">{siteName}</span>
                 </div>
                 <p className="mb-6 font-heading text-lg font-semibold text-foreground">
                   Select an option to continue

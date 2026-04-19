@@ -1,6 +1,7 @@
 "use client";
 
 import { Building2, LogOut } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 import { useAuth } from "@/contexts/auth-context";
 import { NavLink } from "@/components/layout/NavLink";
@@ -19,6 +20,7 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { LucideIcon } from "lucide-react";
 import { SITE_NAME } from "@/lib/branding";
+import { useSettings } from "@/contexts/settings-context";
 import { cn } from "@/lib/utils";
 
 interface NavItem {
@@ -34,7 +36,10 @@ interface DashboardSidebarProps {
 const DashboardSidebar = ({ items }: DashboardSidebarProps) => {
   const { user, logout } = useAuth();
   const { state } = useSidebar();
+  const { settings } = useSettings();
   const collapsed = state === "collapsed";
+  const siteName = settings?.siteName?.trim() || SITE_NAME;
+  const logoUrl = settings?.primaryLogoUrl?.trim() || null;
 
   return (
     <Sidebar collapsible="icon">
@@ -52,24 +57,42 @@ const DashboardSidebar = ({ items }: DashboardSidebarProps) => {
               "flex items-center gap-2 min-w-0",
               collapsed && "justify-center",
             )}
-            aria-label={SITE_NAME}
+            aria-label={siteName}
           >
-            <div
-              className={cn(
-                "rounded-lg hero-gradient flex items-center justify-center shrink-0",
-                collapsed ? "w-8 h-8" : "w-9 h-9",
-              )}
-            >
-              <Building2
+            {logoUrl ? (
+              <span
                 className={cn(
-                  "text-primary-foreground",
-                  collapsed ? "w-4 h-4" : "w-5 h-5",
+                  "relative inline-flex shrink-0 items-center justify-center overflow-hidden rounded-lg bg-muted",
+                  collapsed ? "h-8 w-8" : "h-9 w-9",
                 )}
-              />
-            </div>
+              >
+                <Image
+                  src={logoUrl}
+                  alt={siteName}
+                  fill
+                  sizes={collapsed ? "32px" : "36px"}
+                  unoptimized
+                  className="object-contain"
+                />
+              </span>
+            ) : (
+              <div
+                className={cn(
+                  "rounded-lg hero-gradient flex items-center justify-center shrink-0",
+                  collapsed ? "w-8 h-8" : "w-9 h-9",
+                )}
+              >
+                <Building2
+                  className={cn(
+                    "text-primary-foreground",
+                    collapsed ? "w-4 h-4" : "w-5 h-5",
+                  )}
+                />
+              </div>
+            )}
             {!collapsed && (
               <span className="font-heading font-bold text-lg text-foreground truncate">
-                {SITE_NAME}
+                {siteName}
               </span>
             )}
           </Link>

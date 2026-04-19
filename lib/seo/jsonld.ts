@@ -1,24 +1,27 @@
 import { Property } from "@/components/property/PropertyCard";
-import { SITE_NAME, SUPPORT_EMAIL } from "@/lib/branding";
+import { SUPPORT_EMAIL } from "@/lib/branding";
+import { getBranding } from "@/lib/branding/server";
 import { absoluteUrl, getSiteUrl, toAbsoluteImageUrl } from "@/lib/seo/site";
 
-export function buildOrganizationJsonLd() {
+export async function buildOrganizationJsonLd() {
   const url = getSiteUrl();
+  const { siteName } = await getBranding();
   return {
     "@context": "https://schema.org",
     "@type": "Organization",
-    name: SITE_NAME,
+    name: siteName,
     url,
     email: SUPPORT_EMAIL,
   };
 }
 
-export function buildWebSiteJsonLd() {
+export async function buildWebSiteJsonLd() {
   const url = getSiteUrl();
+  const { siteName } = await getBranding();
   return {
     "@context": "https://schema.org",
     "@type": "WebSite",
-    name: SITE_NAME,
+    name: siteName,
     url,
     potentialAction: {
       "@type": "SearchAction",
@@ -31,18 +34,19 @@ export function buildWebSiteJsonLd() {
   };
 }
 
-export function buildBrowseCollectionJsonLd() {
+export async function buildBrowseCollectionJsonLd() {
   const url = absoluteUrl("/browse");
+  const { siteName } = await getBranding();
   return {
     "@context": "https://schema.org",
     "@type": "CollectionPage",
-    name: `Browse listings | ${SITE_NAME}`,
+    name: `Browse listings | ${siteName}`,
     description:
       "Search verified homes and commercial spaces for rent or sale across India. Filter by city, budget, BHK, and more.",
     url,
     isPartOf: {
       "@type": "WebSite",
-      name: SITE_NAME,
+      name: siteName,
       url: getSiteUrl(),
     },
   };

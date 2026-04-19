@@ -5,34 +5,41 @@ import "./globals.css";
 import { ThemeProvider } from "@/contexts/theme-provider";
 import { AppProviders } from "@/contexts/app-providers";
 import { cn } from "@/lib/utils";
-import { SITE_NAME } from "@/lib/branding";
+import { getBranding } from "@/lib/branding/server";
 import { metadataBase } from "@/lib/seo/site";
 
 const SITE_DESCRIPTION =
   "Find verified rental and sale listings in India. Browse by city and budget, contact owners directly — without broker commission.";
 
-export const metadata: Metadata = {
-  metadataBase: metadataBase(),
-  title: {
-    default: SITE_NAME,
-    template: `%s | ${SITE_NAME}`,
-  },
-  description: SITE_DESCRIPTION,
-  applicationName: SITE_NAME,
-  openGraph: {
-    type: "website",
-    locale: "en_IN",
-    siteName: SITE_NAME,
-    title: SITE_NAME,
+export async function generateMetadata(): Promise<Metadata> {
+  const { siteName, faviconUrl } = await getBranding();
+
+  return {
+    metadataBase: metadataBase(),
+    title: {
+      default: siteName,
+      template: `%s | ${siteName}`,
+    },
     description: SITE_DESCRIPTION,
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: SITE_NAME,
-    description: SITE_DESCRIPTION,
-  },
-  robots: { index: true, follow: true },
-};
+    applicationName: siteName,
+    openGraph: {
+      type: "website",
+      locale: "en_IN",
+      siteName,
+      title: siteName,
+      description: SITE_DESCRIPTION,
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: siteName,
+      description: SITE_DESCRIPTION,
+    },
+    robots: { index: true, follow: true },
+    ...(faviconUrl
+      ? { icons: { icon: faviconUrl, shortcut: faviconUrl, apple: faviconUrl } }
+      : {}),
+  };
+}
 
 const fontSans = DM_Sans({
   subsets: ["latin"],

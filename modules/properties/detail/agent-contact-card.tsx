@@ -16,6 +16,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import type { Property } from "@/components/property/PropertyCard";
 import { SITE_NAME } from "@/lib/branding";
+import { useSettings } from "@/contexts/settings-context";
 
 type LeadPayload = { propertyId: string; message?: string };
 
@@ -49,6 +50,8 @@ export function AgentContactCard({
   createLead,
 }: AgentContactCardProps) {
   const agentLabel = property.agentName?.trim() || "Listing agent";
+  const { settings } = useSettings();
+  const siteName = settings?.siteName?.trim() || SITE_NAME;
 
   return (
     <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.15 }}>
@@ -60,7 +63,7 @@ export function AgentContactCard({
           <div className="min-w-0">
             <p className="wrap-break-word font-heading text-sm font-semibold text-foreground">{agentLabel}</p>
             <p className="wrap-break-word text-xs text-muted-foreground">
-              Assigned listing agent · {SITE_NAME}
+              Assigned listing agent · {siteName}
             </p>
           </div>
         </div>

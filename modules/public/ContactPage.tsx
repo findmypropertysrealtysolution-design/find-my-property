@@ -22,13 +22,20 @@ const RECAPTCHA_SITE_KEY =
   process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY?.trim() ||
   "";
 
-export default function ContactPage() {
+type ContactPageProps = {
+  /** SSR-resolved branding used as the source of truth on first paint. */
+  siteName?: string;
+};
+
+export default function ContactPage({ siteName: ssrSiteName }: ContactPageProps = {}) {
   const { toast } = useToast();
   const { settings } = useSettings();
   // Contact cards prefer the live, admin-managed values but stay usable if the
   // settings query is unavailable (e.g. during SSR-to-CSR hydration gaps).
   const supportEmail = settings?.supportEmail?.trim() || SUPPORT_EMAIL;
   const supportPhone = settings?.supportPhone?.trim() || DEFAULT_SUPPORT_PHONE;
+  const siteName =
+    settings?.siteName?.trim() || ssrSiteName?.trim() || SITE_NAME;
   const recaptchaRef = useRef<ElementRef<typeof ReCAPTCHA>>(null);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -119,7 +126,7 @@ export default function ContactPage() {
             Contact
           </motion.h1>
           <p className="mt-4 text-lg text-muted-foreground">
-            Questions about listings, your account, or working with {SITE_NAME}? Send us a note — we typically reply
+            Questions about listings, your account, or working with {siteName}? Send us a note — we typically reply
             within a few business days.
           </p>
         </div>

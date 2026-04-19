@@ -6,6 +6,8 @@ export interface AuthUser {
   email?: string | null;
   pendingEmail?: string | null;
   phone?: string | null;
+  /** Public profile picture URL; `null` means show initials fallback. */
+  avatarUrl?: string | null;
   role: UserRole;
   /** Preferred role for onboarding / routing when the API provides it */
   defaultRole?: UserRole | null;

@@ -1,6 +1,16 @@
 import type { SystemLog } from "@/schema/system-log";
 
 /**
+ * Hide error-level rows (and the "error" category filter) from the
+ * Admin Activity Log UI in production. Errors are still persisted in
+ * the backend `system_logs` table — only display is suppressed so
+ * end-users / clients don't see internal stack traces.
+ *
+ * Evaluated at build time so dead branches drop out of the bundle.
+ */
+export const HIDE_ERRORS_IN_UI = process.env.NODE_ENV === "production";
+
+/**
  * Translation layer: turns raw HTTP-level system-log rows into
  * human-readable activity feed entries. Works purely on the existing
  * SystemLog shape (no backend migration needed).

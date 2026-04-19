@@ -11,6 +11,7 @@ import { Loader2, LocateFixed, MapPin, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { getGoogleMapsServicesLoaderOptions } from "@/lib/google-maps-loader";
+import { getThemeMarkerSymbol } from "@/lib/map-marker";
 
 export interface LocationValue {
   label: string;
@@ -216,7 +217,10 @@ export default function LocationSearchField({
               gestureHandling: "cooperative",
             }}
           >
-            <Marker position={markerPosition} />
+            <Marker
+              position={markerPosition}
+              icon={getThemeMarkerSymbol({ scale: 1.2 })}
+            />
           </GoogleMap>
           <div className="flex items-center gap-1.5 border-t border-border bg-muted/30 px-2 py-1 text-[11px] text-muted-foreground">
             <MapPin className="h-3 w-3" aria-hidden />

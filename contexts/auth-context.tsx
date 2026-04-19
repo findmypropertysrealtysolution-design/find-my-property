@@ -53,6 +53,7 @@ interface AuthContextType {
     role?: UserRole;
     phone?: string;
     otp?: string;
+    avatarUrl?: string | null;
     locationAddress?: string;
     locationCity?: string;
     locationState?: string;
@@ -175,6 +176,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     role?: UserRole;
     phone?: string;
     otp?: string;
+    avatarUrl?: string | null;
     locationAddress?: string;
     locationCity?: string;
     locationState?: string;
